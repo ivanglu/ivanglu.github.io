@@ -52,7 +52,7 @@ automatically.
 
 1. In your browser, go to https://github.com/new
 2. Fill in:
-   - **Repository name:** `<your-username>.github.io`
+   - **Repository name:** `ivanglu.github.io`
      (e.g. if your GitHub username is `ivanglushchenko`, the repo is
      `ivanglushchenko.github.io`)
    - **Description:** `My personal website.`
@@ -74,14 +74,14 @@ we'll do this through GitHub Desktop.
 3. GitHub Desktop will say "This directory does not appear to be a Git
    repository." Click **create a repository** on that message.
 4. On the "Create a new repository" dialog:
-   - **Name:** `<your-username>.github.io` (must match the GitHub repo name).
+   - **Name:** `ivanglu.github.io` (must match the GitHub repo name).
    - **Local path:** should already be filled in.
    - Click **Create repository**.
 5. In the top-right of GitHub Desktop you'll see **Publish repository**. Click it.
 6. In the dialog, make sure **Keep this code private** is **unchecked**. Click
    **Publish repository**.
 
-Your files are now on GitHub. Open `https://github.com/<your-username>/<your-username>.github.io`
+Your files are now on GitHub. Open `https://github.com/ivanglu/ivanglu.github.io`
 in a browser — you should see all the files listed.
 
 ---
@@ -93,7 +93,7 @@ in a browser — you should see all the files listed.
 3. Under **Build and deployment → Source**, choose **Deploy from a branch**.
 4. Under **Branch**, pick **main** and **/ (root)**. Click **Save**.
 5. Wait ~1 minute, then refresh. You'll see a green banner:
-   `Your site is live at https://<your-username>.github.io/`
+   `Your site is live at https://ivanglu.github.io/`
 
 Open that URL to verify — the site should work (though at this stage the custom
 domain isn't connected yet).
@@ -121,7 +121,7 @@ already active. We just add 4 A records (apex) + 1 CNAME record (www).
    | A     | `@`   | `185.199.109.153`         | **DNS only** (grey)    | Auto |
    | A     | `@`   | `185.199.110.153`         | **DNS only** (grey)    | Auto |
    | A     | `@`   | `185.199.111.153`         | **DNS only** (grey)    | Auto |
-   | CNAME | `www` | `<your-username>.github.io` | **DNS only** (grey)   | Auto |
+   | CNAME | `www` | `ivanglu.github.io` | **DNS only** (grey)   | Auto |
 
    > **Important:** click the orange cloud icon on each record to turn it **grey**
    > ("DNS only"). This lets GitHub provision the HTTPS certificate. Once SSL
@@ -212,7 +212,7 @@ The Python Horizon racing game project card is already filled in; replace the
 - In Cloudflare → DNS → make sure all 5 records are **grey cloud** (DNS only),
   not orange (proxied). GitHub can't verify through a proxy.
 - Make sure the A records point to `185.199.108.153` / `.109.153` / `.110.153` /
-  `.111.153` and the CNAME at `www` points to `<your-username>.github.io`
+  `.111.153` and the CNAME at `www` points to `ivanglu.github.io`
   (with a trailing `.github.io`, not just `github.io`).
 - You can check what Cloudflare is actually serving with:
   ```sh
@@ -220,11 +220,11 @@ The Python Horizon racing game project card is already filled in; replace the
   dig +short www.ivanglushchenko.com
   ```
   The first should show 4 GitHub Pages IPs. The second should show
-  `<your-username>.github.io.`
+  `ivanglu.github.io.`
 
 ### Site loads but shows "404 Not Found"
 
-- Repo must be named exactly `<your-username>.github.io`. If it's named
+- Repo must be named exactly `ivanglu.github.io`. If it's named
   differently, GitHub Pages publishes under a path instead of the root — rename
   the repo in **Settings → General → Repository name**.
 - The CNAME file inside the repo must contain exactly `ivanglushchenko.com` with
@@ -269,7 +269,7 @@ cd "/Users/ivanglushchenko/Desktop/Claude python/Personal webstie"
 git init -b main
 git add -A
 git commit -m "Initial site"
-gh repo create <your-username>.github.io --public --source=. --push
+gh repo create ivanglu.github.io --public --source=. --push
 ```
 
 After that, the loop is just:
