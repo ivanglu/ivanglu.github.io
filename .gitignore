@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Local build artefacts (none for now — pure static site)
+dist/
+build/
+
+# OS-specific
+Thumbs.db

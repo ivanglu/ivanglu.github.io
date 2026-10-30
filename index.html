@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ivan Glushchenko — Senior High Student</title>
+  <meta name="description" content="Personal site of Ivan Glushchenko, senior high school student. Projects, interests, and contact." />
+  <meta name="theme-color" content="#111318" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🚀%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+  <nav class="nav">
+    <a href="#top" class="nav__brand">IG</a>
+    <ul class="nav__links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#interests">Interests</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <header id="top" class="hero">
+    <div class="hero__inner">
+      <p class="hero__eyebrow">Hi, I'm</p>
+      <h1 class="hero__title">Ivan Glushchenko</h1>
+      <p class="hero__tagline">
+        Senior high school student <span class="dot"></span>
+        <!-- [EDIT ME] replace with your interests, e.g. "Builder of games & web things" -->
+        Builder of games, websites, and small useful things.
+      </p>
+      <div class="hero__actions">
+        <a href="#projects" class="btn btn--primary">See my work</a>
+        <a href="#contact" class="btn btn--ghost">Get in touch</a>
+      </div>
+    </div>
+    <div class="hero__scroll" aria-hidden="true">↓</div>
+  </header>
+
+  <main>
+
+    <section id="about" class="section">
+      <h2 class="section__title">About</h2>
+      <div class="section__grid about__grid">
+        <div class="about__text">
+          <!-- [EDIT ME] your bio in 2-3 short paragraphs -->
+          <p>
+            I'm a senior at <strong>[your school]</strong>, graduating in <strong>[year]</strong>.
+            I spend a lot of my time coding, building things, and figuring out how systems work from
+            first principles.
+          </p>
+          <p>
+            Lately I've been working on a 3D arcade racing game in Python and sharpening my
+            web-dev skills. I'm interested in applying to study <strong>[field]</strong> in
+            university, and I'm always open to interesting conversations.
+          </p>
+        </div>
+        <aside class="about__card">
+          <dl class="facts">
+            <div class="facts__row">
+              <dt>Based in</dt>
+              <dd>[City, Country]</dd>
+            </div>
+            <div class="facts__row">
+              <dt>School</dt>
+              <dd>[School name]</dd>
+            </div>
+            <div class="facts__row">
+              <dt>Graduating</dt>
+              <dd>[Year]</dd>
+            </div>
+            <div class="facts__row">
+              <dt>Looking for</dt>
+              <dd>University, internships, cool projects</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
+    </section>
+
+    <section id="interests" class="section section--muted">
+      <h2 class="section__title">Interests</h2>
+      <ul class="cards">
+        <li class="card">
+          <div class="card__icon" aria-hidden="true">💻</div>
+          <h3 class="card__title">Programming</h3>
+          <p class="card__body">
+            Python, JavaScript, and a growing curiosity for lower-level languages like C.
+            I like projects where I get to design the whole system, not just a part.
+          </p>
+        </li>
+        <li class="card">
+          <div class="card__icon" aria-hidden="true">🎮</div>
+          <h3 class="card__title">Game development</h3>
+          <p class="card__body">
+            Arcade physics, procedural worlds, and the small details that make a game feel good.
+            Working on an open-world racer in Ursina right now.
+          </p>
+        </li>
+        <li class="card">
+          <div class="card__icon" aria-hidden="true">📚</div>
+          <h3 class="card__title">[EDIT ME]</h3>
+          <p class="card__body">
+            A hobby or academic interest — chess, music, basketball, physics, debate, anything
+            that says something about you.
+          </p>
+        </li>
+        <li class="card">
+          <div class="card__icon" aria-hidden="true">🛠️</div>
+          <h3 class="card__title">Making stuff</h3>
+          <p class="card__body">
+            Websites, scripts, tiny experiments. If I use a tool for a week, I usually end up
+            trying to build my own version of it.
+          </p>
+        </li>
+      </ul>
+    </section>
+
+    <section id="projects" class="section">
+      <h2 class="section__title">Projects</h2>
+      <ul class="projects">
+        <li class="project">
+          <div class="project__meta">
+            <span class="tag">Game</span>
+            <span class="tag tag--muted">Python • Ursina</span>
+          </div>
+          <h3 class="project__title">Python Horizon</h3>
+          <p class="project__body">
+            An open-world arcade racing game in the Forza Horizon spirit, built from scratch in
+            Python with Ursina + Panda3D. 1&nbsp;km² procedural terrain, Catmull-Rom road splines,
+            Poisson-disk prop placement, and arcade car physics with proper weight transfer and
+            handbrake drift.
+          </p>
+          <!-- [EDIT ME] once the repo is live, replace # with the real URL -->
+          <a href="#" class="project__link">View on GitHub →</a>
+        </li>
+        <li class="project">
+          <div class="project__meta">
+            <span class="tag">Web</span>
+            <span class="tag tag--muted">HTML • CSS</span>
+          </div>
+          <h3 class="project__title">This website</h3>
+          <p class="project__body">
+            The site you're on now. Hand-built with no frameworks, deployed from GitHub to
+            Cloudflare under <code>ivanglu.com</code>. Dark mode by default, responsive
+            down to phones.
+          </p>
+          <a href="https://github.com/ivanglu/ivanglu.github.io" class="project__link">View on GitHub →</a>
+        </li>
+        <li class="project">
+          <div class="project__meta">
+            <span class="tag">[EDIT ME]</span>
+          </div>
+          <h3 class="project__title">Your next project</h3>
+          <p class="project__body">
+            Replace this card with something you've built — a school project, a hackathon
+            submission, a mod, a drawing. One or two sentences on what it is and what you learned.
+          </p>
+          <a href="#" class="project__link">Add link →</a>
+        </li>
+      </ul>
+    </section>
+
+    <section id="contact" class="section section--muted">
+      <h2 class="section__title">Contact</h2>
+      <p class="contact__blurb">
+        Shoot me a message about anything — questions, interesting opportunities, or just to say hi.
+      </p>
+      <ul class="contact__list">
+        <!-- [EDIT ME] replace href values with your real links -->
+        <li>
+          <a href="mailto:you@example.com" class="contact__item">
+            <span class="contact__icon" aria-hidden="true">✉️</span>
+            <span class="contact__label">Email</span>
+            <span class="contact__value">you@example.com</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/ivanglu" class="contact__item">
+            <span class="contact__icon" aria-hidden="true">🐙</span>
+            <span class="contact__label">GitHub</span>
+            <span class="contact__value">@ivanglu</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://www.linkedin.com/in/your-handle" class="contact__item">
+            <span class="contact__icon" aria-hidden="true">💼</span>
+            <span class="contact__label">LinkedIn</span>
+            <span class="contact__value">in/your-handle</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year">2026</span> Ivan Glushchenko. Built with HTML + CSS, hosted on GitHub Pages.</p>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
