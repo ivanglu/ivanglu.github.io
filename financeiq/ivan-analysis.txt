@@ -1,0 +1,29 @@
+pair: AAPL, MSFT
+updated:
+
+<!--
+IVAN: THIS FILE IS YOURS. Write your analysis below this comment, in your own words.
+Whatever you type here appears on the page inside the "Ivan's analysis" box.
+Until you write something, the page shows "Ivan is writing this section."
+
+Nothing inside this comment block is shown on the site.
+
+How to format:
+  ## A heading
+  A normal paragraph. Leave a blank line between paragraphs.
+  - a bullet point
+  **bold**, *italic*, [a link](https://www.sec.gov)
+
+Fill in "updated:" above with the date you finish, e.g.  updated: December 2026
+
+Questions that may help you get started (delete or ignore them, they are only prompts):
+  - Before looking at the numbers, which company did you expect to be stronger, and why?
+  - Which single number on the dashboard surprised you most?
+  - Apple makes more free cash flow, Microsoft has higher margins and faster growth.
+    Which matters more to you, and why?
+  - Microsoft's capital spending went from $20.6B to $115.9B in five years. Is that a
+    strength or a risk? What would you need to see to change your mind?
+  - Where do you disagree with the AI summary, or think it missed something?
+  - What did you learn about reading a 10-K that you did not know before?
+  - Your verdict: which company is financially stronger? What would make you wrong?
+-->

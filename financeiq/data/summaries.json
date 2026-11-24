@@ -1,0 +1,199 @@
+{
+ "generated": "2026-11-24",
+ "model": "Claude (Anthropic)",
+ "note": "Written by an AI model from the 10-K figures in this folder. Regenerate after running tools/build_data.py.",
+ "companies": {
+  "AAPL": {
+   "strengths": [
+    "Huge cash generation: $136.1B of free cash flow in fiscal 2026, while spending only $9.0B on buildings and equipment.",
+    "Margins keep widening. Gross margin rose from 41.8% in fiscal 2021 to 48.8%, and net margin reached 27.6%.",
+    "Debt is steadily shrinking, from $124.7B in fiscal 2021 to $80.1B."
+   ],
+   "risks": [
+    "Slow long-run growth: sales rose about 5.5% a year over five years and actually fell in fiscal 2023.",
+    "Debt ($80.1B) is still larger than cash and short-term investments ($56.7B). That figure leaves out long-term investments, so it understates Apple's cushion.",
+    "Shareholder equity is small ($112.1B) for a company this size, because most cash goes back to shareholders instead of staying on the balance sheet."
+   ]
+  },
+  "MSFT": {
+   "strengths": [
+    "Exceptional profitability: a 46.8% operating margin and 40.3% net margin in fiscal 2026.",
+    "Fast, steady growth for its size. Sales nearly doubled from $168.1B to $331.8B in five years (about 14.6% a year) with no down year.",
+    "More cash than debt: $76.8B against $40.3B, and debt has fallen from $58.1B in fiscal 2021."
+   ],
+   "risks": [
+    "Capital spending has exploded, from $20.6B in fiscal 2021 to $115.9B in fiscal 2026, most likely on data centres.",
+    "Free cash flow has drifted down for three years ($74.1B, $71.6B, $67.0B) even though operating cash flow hit a record $182.9B. The payoff from that spending is not yet visible in cash.",
+    "Gross margin slipped from 69.8% in fiscal 2024 to 67.9%, a sign that costs are growing faster than sales."
+   ]
+  },
+  "GOOGL": {
+   "strengths": [
+    "Strong growth at scale: sales rose from $182.5B to $402.8B in five years, about 17.2% a year.",
+    "Highly profitable, with a 32.8% net margin and $132.2B of net income in 2025.",
+    "A large cash pile: $126.8B in cash and short-term investments against $49.1B of debt."
+   ],
+   "risks": [
+    "Capital spending quadrupled from $22.3B in 2020 to $91.4B in 2025, so free cash flow stayed flat near $73B while operating cash flow grew to $164.7B.",
+    "Debt more than tripled in a single year, from $14.3B to $49.1B.",
+    "Most of its revenue comes from advertising, which businesses tend to cut first when the economy slows."
+   ]
+  },
+  "AMZN": {
+   "strengths": [
+    "Enormous scale that is still growing: $716.9B of sales in 2025, up about 13.2% a year over five years.",
+    "Profitability is improving quickly. Operating margin went from 2.4% in 2022 to 11.2%, and net income reached $77.7B.",
+    "More cash than debt: $123.0B against $69.3B."
+   ],
+   "risks": [
+    "Capital spending of $131.8B swallowed almost all of the $139.5B in operating cash flow, leaving just $7.7B of free cash flow in 2025.",
+    "Free cash flow was negative in both 2021 and 2022, so its cash generation is far less dependable than its sales.",
+    "A 10.8% net margin is thin next to other large technology companies, which leaves less room for mistakes."
+   ]
+  },
+  "META": {
+   "strengths": [
+    "Very high margins: an 82.0% gross margin and a 41.4% operating margin in 2025.",
+    "Rapid growth, from $86.0B to $201.0B of sales in five years (about 18.5% a year).",
+    "Strong cash engine: $115.8B of operating cash flow, with $81.6B in cash against $58.7B of debt."
+   ],
+   "risks": [
+    "Capital spending nearly doubled in one year, from $37.3B to $69.7B, pulling free cash flow down from $54.1B to $46.1B.",
+    "It went from no debt in 2021 to $58.7B in 2025.",
+    "Net income fell slightly in 2025 ($62.4B to $60.5B) despite 22% sales growth, and 2022 showed how fast profit can drop: net margin fell to 19.9% that year."
+   ]
+  },
+  "NVDA": {
+   "strengths": [
+    "Extraordinary growth: sales went from $16.7B in fiscal 2021 to $215.9B in fiscal 2026, roughly 67% a year.",
+    "The highest margins in this set: a 55.6% net margin and $120.1B of net income.",
+    "It needs little capital. Free cash flow was $96.7B on just $6.0B of capital spending, and debt is only $8.5B against $49.7B of cash and short-term investments."
+   ],
+   "risks": [
+    "The business is cyclical. In fiscal 2023 sales were flat and net income fell by more than half, from $9.8B to $4.4B.",
+    "Gross margin dipped from 75.0% to 71.1% in the latest year.",
+    "Growth this fast is rarely sustained, and it depends heavily on a small number of very large customers continuing to spend on AI data centres."
+   ]
+  },
+  "TSLA": {
+   "strengths": [
+    "A very safe balance sheet: $44.1B in cash and short-term investments against only $6.6B of debt.",
+    "Sales tripled in five years, from $31.5B in 2020 to $94.8B in 2025.",
+    "Free cash flow has been positive every year since 2020, even while it built new factories."
+   ],
+   "risks": [
+    "Growth has stalled. Sales went from $96.8B in 2023 to $97.7B and then down to $94.8B.",
+    "Profit has collapsed: net margin fell from 15.4% in 2022 to 4.0%, and net income from $12.6B to $3.8B.",
+    "Gross margin dropped from 25.6% to 18.0% over the same period, which suggests it is cutting prices to keep selling cars."
+   ]
+  },
+  "NFLX": {
+   "strengths": [
+    "Margins are expanding fast: operating margin rose from 17.8% in 2022 to 29.5% in 2025.",
+    "It has turned into a real cash generator, going from roughly zero free cash flow in 2021 to $9.5B in 2025.",
+    "Consistent double-digit growth: sales rose about 12.6% a year over five years, to $45.2B."
+   ],
+   "risks": [
+    "It carries more debt ($14.5B) than cash ($9.1B).",
+    "Cash flow has a weak history. Free cash flow was slightly negative as recently as 2021, because shows and films are paid for years before they earn money.",
+    "It has to keep spending heavily on new content to hold on to subscribers, so costs are hard to cut."
+   ]
+  },
+  "DIS": {
+   "strengths": [
+    "Profitability is recovering: operating margin climbed from 11.5% in fiscal 2021 to 19.3% in fiscal 2026.",
+    "Free cash flow grew from $2.0B to $10.6B over the same period.",
+    "It has been paying down debt, from $54.4B in fiscal 2021 to $44.5B."
+   ],
+   "risks": [
+    "Debt is still heavy: $44.5B against only $6.7B of cash.",
+    "Bottom-line profit is uneven. Net income fell from $12.4B to $9.9B in fiscal 2026, and net margin was below 6% in every year from 2021 to 2024.",
+    "Capital spending has more than doubled since fiscal 2021, from $3.6B to $8.7B."
+   ]
+  },
+  "NKE": {
+   "strengths": [
+    "Gross margin near 43% shows the brand can still charge premium prices.",
+    "Low debt: $7.9B of borrowings is almost fully matched by $7.6B of cash and short-term investments.",
+    "It has stayed profitable and produced positive free cash flow every year, even during the downturn."
+   ],
+   "risks": [
+    "Sales are going nowhere: $46.4B in fiscal 2026 is below the $51.2B of fiscal 2023, and five-year growth is under 1% a year.",
+    "Profit has roughly halved. Net margin fell from 12.9% in fiscal 2021 to 6.7%, and net income from $5.7B to $3.1B.",
+    "Free cash flow dropped from $6.6B in fiscal 2024 to $2.2B."
+   ]
+  },
+  "KO": {
+   "strengths": [
+    "Very high margins for a consumer company: a 61.6% gross margin and a 27.3% net margin in 2025.",
+    "It needs little investment to run, with only $2.1B of capital spending on $47.9B of sales.",
+    "Steady growth from $33.0B in 2020 to $47.9B, although 2020 was a pandemic low point."
+   ],
+   "risks": [
+    "Heavy debt: $45.4B against $13.9B of cash and short-term investments.",
+    "Profit is not fully turning into cash. Free cash flow was $5.3B in 2025 against $13.1B of net income, and operating cash flow is well below its 2023 level.",
+    "Growth has slowed to under 2% in the latest year ($47.1B to $47.9B)."
+   ]
+  },
+  "PEP": {
+   "strengths": [
+    "Large and stable: $93.9B of sales with gross margin holding near 54% for years.",
+    "Dependable free cash flow, between $5.6B and $7.9B in each of the last six years.",
+    "Sales grew about 5.9% a year over five years."
+   ],
+   "risks": [
+    "Debt of $46.4B is more than twice shareholder equity ($20.4B) and far above its $9.5B of cash.",
+    "Margins are slipping: operating margin fell from 14.0% to 12.2% in 2025 and net income from $9.6B to $8.2B.",
+    "Growth has slowed to about 2% a year ($91.9B to $93.9B)."
+   ]
+  },
+  "WMT": {
+   "strengths": [
+    "The largest revenue here except Amazon: $706.4B in fiscal 2026, and it grew every single year.",
+    "Profit is rising faster than sales. Net income went from $13.5B to $21.9B in five years, and the 3.1% net margin is the best of the period.",
+    "Strong operating cash flow of $41.6B."
+   ],
+   "risks": [
+    "Margins are razor thin. Keeping about $3 of every $100 in sales leaves little room for cost increases.",
+    "Capital spending rose from $10.3B to $26.6B, so free cash flow ($14.9B) is well below the $25.8B of fiscal 2021.",
+    "Debt of $44.8B is about four times its cash ($10.7B)."
+   ]
+  },
+  "COST": {
+   "strengths": [
+    "A cash-rich balance sheet: $21.3B in cash and short-term investments against $6.2B of debt.",
+    "Very consistent growth. Sales rose every year, about 9.1% a year over five years, to $303.2B.",
+    "Profit has nearly doubled, from $5.0B to $9.2B, with net margin inching up from 2.6% to 3.0%."
+   ],
+   "risks": [
+    "Extremely thin margins: a 12.8% gross margin and a 3.0% net margin.",
+    "With so little profit per dollar of sales, a small drop in sales volume or a rise in costs would hit profit hard.",
+    "Capital spending is climbing, from $3.6B to $6.4B in five years."
+   ]
+  },
+  "MCD": {
+   "strengths": [
+    "A 46.1% operating margin, the result of collecting rent and fees from franchise owners instead of running most restaurants itself.",
+    "A 31.9% net margin in 2025.",
+    "Steady free cash flow of $5.5B to $7.3B a year since 2021."
+   ],
+   "risks": [
+    "Very heavy debt: $40.8B against less than $1B of cash, equal to more than five years of free cash flow.",
+    "Negative shareholder equity (-$1.8B), meaning it owes more than the book value of what it owns.",
+    "Slow growth: sales rose only from $25.5B to $26.9B over the last two years."
+   ]
+  },
+  "SBUX": {
+   "strengths": [
+    "Sales have grown every year, from $29.1B in fiscal 2021 to $37.9B in fiscal 2026.",
+    "Early signs of recovery: operating margin improved from 7.9% to 9.7% and net income from $1.9B to $2.5B in the latest year.",
+    "It reduced debt from $16.1B to $13.3B while free cash flow rose to $3.7B."
+   ],
+   "risks": [
+    "Profitability is far below where it was. Operating margin was 16.8% in fiscal 2021 and is 9.7% now.",
+    "Negative shareholder equity (-$7.7B), and debt of $13.3B against $3.9B of cash.",
+    "Sales growth has slowed to about 2% a year."
+   ]
+  }
+ }
+}
