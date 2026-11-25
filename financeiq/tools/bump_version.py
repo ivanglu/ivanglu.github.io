@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent          # financeiq/
-PAGES = list(ROOT.glob("*.html")) + [ROOT / "tests" / "index.html", ROOT.parent / "index.html"]
+PAGES = list(ROOT.glob("*.html")) + [ROOT / "tests" / "index.html", ROOT.parent / "index.html", ROOT.parent / "404.html"]
 
 
 def main(argv):

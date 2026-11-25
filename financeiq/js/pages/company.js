@@ -95,6 +95,7 @@
           ${stat("Cash and short-term investments", money(c.latest.cash), "")}
         </div></div>
       </section>
+      ${piotroskiCard(c)}
       <section class="fq-section">
         <h2>Quarterly results</h2>
         <p class="fq-sub">Growth is ${term("yoy", "year over year")}: each quarter against the same quarter a year earlier.</p>
@@ -112,6 +113,20 @@
         </table></div>
         <p class="fq-small fq-muted">Dollar figures as first reported. <a href="${esc(c.filingsUrl)}" target="_blank" rel="noopener">All ${esc(c.name)} filings on SEC EDGAR ↗</a></p></div>
       </section>`;
+  }
+
+  function piotroskiCard(c) {
+    const f = c.piotroski;
+    if (!f) return "";
+    const mark = (p) => (p === true ? '<span class="fq-up">✓ Pass</span>' : p === false ? '<span class="fq-down">✗ Fail</span>' : '<span class="fq-muted">n/a</span>');
+    return `<section class="fq-section">
+      <h2>Piotroski F-Score: ${Calc.isNum(f.score) ? `${f.score} of ${f.available}` : "not available"}</h2>
+      <p class="fq-sub">Nine yes/no tests from accounting research, comparing fiscal ${f.fy} with the year before. 8 or 9 is usually read as strong, 3 or fewer as weak. It was designed to separate stronger from weaker cheap stocks, so treat it as one view of quality, not a verdict.</p>
+      <div class="fq-card"><div class="fq-tablewrap"><table class="fq-table fq-table--dense">
+        <tbody>${f.tests.map((t, i) => `<tr><td>${i + 1}. ${esc(t.label)}<span class="fq-hint">${esc(t.why)}</span></td><td>${mark(t.pass)}</td></tr>`).join("")}</tbody>
+      </table></div>
+      <p class="fq-small fq-muted">Two simplifications: debt is total debt rather than long-term debt only, and new shares are judged from the diluted share count with 0.5% allowed. ${Calc.isNum(f.score) ? "" : `Only ${f.available} of 9 tests could be calculated, so no score is given.`}</p></div>
+    </section>`;
   }
 
   function earnings(c, rating) {

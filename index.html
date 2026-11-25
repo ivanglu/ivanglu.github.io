@@ -3,46 +3,127 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ivan Glushchenko — Senior High Student</title>
-  <meta name="description" content="Ivan Glushchenko — senior at Xaverian Brothers High School in Westwood, MA, class of 2027. Interested in finance, business analytics, and building software. Projects, interests, and contact." />
-  <meta name="theme-color" content="#111318" />
-  <link rel="stylesheet" href="styles.css?v=3.0.1" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🚀%3C/text%3E%3C/svg%3E" />
+  <title>Ivan Glushchenko · Finance, data and software</title>
+  <meta name="description" content="Ivan Glushchenko, senior at Xaverian Brothers High School in Westwood, MA, class of 2027. Interested in finance, business analytics and building software. Projects include FinanceIQ, a stock research tool built on SEC filings." />
+  <meta name="theme-color" content="#0d0f14" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Ivan Glushchenko · Finance, data and software" />
+  <meta property="og:description" content="Projects, including FinanceIQ: a stock research tool that grades 38 companies from their SEC filings and shows every calculation." />
+  <meta property="og:url" content="https://ivanglushchenko.com/" />
+  <meta property="og:image" content="https://ivanglushchenko.com/financeiq/preview.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="canonical" href="https://ivanglushchenko.com/" />
+  <link rel="stylesheet" href="styles.css?v=3.1.0" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23141821'/%3E%3Ctext x='50' y='66' font-size='46' font-weight='700' text-anchor='middle' font-family='Arial' fill='%236ea0ff'%3EIG%3C/text%3E%3C/svg%3E" />
+  <script src="theme.js?v=3.1.0"></script>
 </head>
 <body>
+  <a class="skip" href="#main">Skip to content</a>
 
-  <nav class="nav">
-    <a href="#top" class="nav__brand">IG</a>
-    <ul class="nav__links">
-      <li><a href="#about">About</a></li>
-      <li><a href="#interests">Interests</a></li>
-      <li><a href="#projects">Projects</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
-  </nav>
+  <header class="nav">
+    <a href="#top" class="nav__brand" aria-label="Ivan Glushchenko, back to top"><span class="nav__mark">IG</span><span class="nav__name">Ivan Glushchenko</span></a>
+    <nav aria-label="Sections">
+      <ul class="nav__links">
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#interests">Interests</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="financeiq/" class="nav__app">FinanceIQ</a></li>
+      </ul>
+    </nav>
+    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch between light and dark theme" title="Light / dark">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 0 18V3z"/><circle cx="12" cy="12" r="8.25" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+    </button>
+  </header>
 
-  <header id="top" class="hero">
+  <div id="top" class="hero">
     <div class="hero__inner">
       <p class="hero__eyebrow">Hi, I'm</p>
       <h1 class="hero__title">Ivan Glushchenko</h1>
       <p class="hero__tagline">
-        Senior high school student <span class="dot"></span>
-        <!-- TODO: reword this tagline anytime you want -->
-        Builder of games, websites, and small useful things.
+        Senior at Xaverian Brothers High School, class of 2027. Interested in finance, data and
+        building software, and in the overlap between them.
       </p>
       <div class="hero__actions">
-        <a href="#projects" class="btn btn--primary">See my work</a>
+        <a href="financeiq/" class="btn btn--primary">Open FinanceIQ</a>
+        <a href="#projects" class="btn btn--ghost">See all projects</a>
         <a href="#contact" class="btn btn--ghost">Get in touch</a>
       </div>
     </div>
-    <div class="hero__scroll" aria-hidden="true">↓</div>
-  </header>
+  </div>
 
-  <main>
+  <main id="main" tabindex="-1">
 
-    <section id="about" class="section">
+    <section id="projects" class="section">
+      <h2 class="section__title">Projects</h2>
+      <ul class="projects">
+        <li class="project project--featured">
+          <div class="project__featured-text">
+            <div class="project__meta">
+              <span class="tag">Flagship project</span>
+              <span class="tag tag--muted">Finance · Data analytics</span>
+              <span class="tag tag--muted">JavaScript · Python · SEC EDGAR</span>
+            </div>
+            <h3 class="project__title">FinanceIQ</h3>
+            <p class="project__body">
+              A stock research tool that reads ten years of annual and quarterly reports for 38
+              public companies straight from the SEC, and turns them into ratings, screens and
+              valuations that show their working.
+            </p>
+            <ul class="project__list">
+              <li><strong>Stock ratings:</strong> each company graded on fundamentals, earnings momentum and financial quality, with every measure shown.</li>
+              <li><strong>Screener and search:</strong> sort, filter, compare up to four companies, and look any of them up by ticker or name.</li>
+              <li><strong>DCF valuation simulator:</strong> scenarios, sensitivity table and reverse DCF.</li>
+              <li><strong>Tested:</strong> every formula has automated tests, and stored figures are checked against the filings.</li>
+            </ul>
+            <div class="project__links">
+              <a href="financeiq/" class="btn btn--primary">Open FinanceIQ</a>
+              <a href="financeiq/index.html?tour=1" class="btn btn--ghost">2-minute tour</a>
+            </div>
+            <p class="project__more">
+              <a href="financeiq/research.html">Research</a>
+              <a href="financeiq/methodology.html">Methodology</a>
+              <a href="financeiq/reports/FinanceIQ-sample-report-AAPL-MSFT.pdf">Sample report (PDF)</a>
+              <a href="financeiq/about.html">About the project</a>
+            </p>
+          </div>
+          <a href="financeiq/" class="project__preview" aria-label="Open FinanceIQ">
+            <img src="financeiq/preview.png?v=3.1.0" alt="FinanceIQ company page for Microsoft, showing its stock rating and category grades" width="1280" height="1010" loading="lazy" />
+          </a>
+        </li>
+        <li class="project">
+          <div class="project__meta">
+            <span class="tag">Game</span>
+            <span class="tag tag--muted">Python · Ursina</span>
+          </div>
+          <h3 class="project__title">Python Horizon</h3>
+          <p class="project__body">
+            An open-world arcade racing game in the Forza Horizon spirit, built from scratch in
+            Python with Ursina + Panda3D. 1&nbsp;km² procedural terrain, Catmull-Rom road splines,
+            Poisson-disk prop placement, and arcade car physics with proper weight transfer and
+            handbrake drift.
+          </p>
+          <p class="project__status">Source code not published yet</p>
+        </li>
+        <li class="project">
+          <div class="project__meta">
+            <span class="tag">Web</span>
+            <span class="tag tag--muted">HTML · CSS · JavaScript</span>
+          </div>
+          <h3 class="project__title">This website</h3>
+          <p class="project__body">
+            The site you're on now, including FinanceIQ. Hand-built with no frameworks and
+            published from GitHub under <code>ivanglushchenko.com</code>. Light and dark themes,
+            keyboard accessible, and responsive down to phones.
+          </p>
+          <a href="https://github.com/ivanglu/ivanglu.github.io" class="project__link">View the code on GitHub →</a>
+        </li>
+      </ul>
+    </section>
+
+    <section id="about" class="section section--muted">
       <h2 class="section__title">About</h2>
-      <div class="section__grid about__grid">
+      <div class="about__grid">
         <div class="about__text">
           <p>
             I'm a senior at <strong>Xaverian Brothers High School</strong>, graduating in
@@ -52,38 +133,27 @@
           <p>
             Lately I've been working on a 3D arcade racing game in Python and sharpening my
             web-dev skills. I'm applying to study <strong>finance and business analytics</strong>
-            in university — I like the overlap between building software and understanding the
+            in university. I like the overlap between building software and understanding the
             numbers behind a decision. Always open to interesting conversations.
           </p>
         </div>
-        <aside class="about__card">
+        <aside class="about__card" aria-label="Quick facts">
           <dl class="facts">
-            <div class="facts__row">
-              <dt>Based in</dt>
-              <dd>Westwood, Massachusetts</dd>
-            </div>
-            <div class="facts__row">
-              <dt>School</dt>
-              <dd>Xaverian Brothers High School</dd>
-            </div>
-            <div class="facts__row">
-              <dt>Graduating</dt>
-              <dd>2027</dd>
-            </div>
-            <div class="facts__row">
-              <dt>Looking for</dt>
-              <dd>University, internships, cool projects</dd>
-            </div>
+            <div class="facts__row"><dt>Based in</dt><dd>Westwood, Massachusetts</dd></div>
+            <div class="facts__row"><dt>School</dt><dd>Xaverian Brothers High School</dd></div>
+            <div class="facts__row"><dt>Graduating</dt><dd>2027</dd></div>
+            <div class="facts__row"><dt>Studying next</dt><dd>Finance and business analytics</dd></div>
+            <div class="facts__row"><dt>Looking for</dt><dd>University, internships, interesting projects</dd></div>
           </dl>
         </aside>
       </div>
     </section>
 
-    <section id="interests" class="section section--muted">
+    <section id="interests" class="section">
       <h2 class="section__title">Interests</h2>
       <ul class="cards">
         <li class="card">
-          <div class="card__icon" aria-hidden="true">💻</div>
+          <svg class="card__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg>
           <h3 class="card__title">Programming</h3>
           <p class="card__body">
             Python, JavaScript, and a growing curiosity for lower-level languages like C.
@@ -91,7 +161,7 @@
           </p>
         </li>
         <li class="card">
-          <div class="card__icon" aria-hidden="true">🎮</div>
+          <svg class="card__icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="4"/><path d="M7 10.5v4M5 12.5h4M15.5 11.5h.01M18 13.5h.01"/></svg>
           <h3 class="card__title">Game development</h3>
           <p class="card__body">
             Arcade physics, procedural worlds, and the small details that make a game feel good.
@@ -99,15 +169,15 @@
           </p>
         </li>
         <li class="card">
-          <div class="card__icon" aria-hidden="true">📈</div>
+          <svg class="card__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 16l4-5 4 3 6-8"/><path d="M15 6h4v4"/></svg>
           <h3 class="card__title">Markets &amp; analytics</h3>
           <p class="card__body">
             Finance, business strategy, and what the data actually says. I like pulling numbers
-            apart to find the story underneath — it's the same instinct as debugging code.
+            apart to find the story underneath. It's the same instinct as debugging code.
           </p>
         </li>
         <li class="card">
-          <div class="card__icon" aria-hidden="true">🛠️</div>
+          <svg class="card__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5.4 5.1L3.5 17.2l3.3 3.3 5.6-5.6a4 4 0 0 0 5.1-5.4l-2.4 2.4-2.6-.7-.7-2.6z"/></svg>
           <h3 class="card__title">Making stuff</h3>
           <p class="card__body">
             Websites, scripts, tiny experiments. If I use a tool for a week, I usually end up
@@ -117,104 +187,34 @@
       </ul>
     </section>
 
-    <section id="projects" class="section">
-      <h2 class="section__title">Projects</h2>
-      <ul class="projects">
-        <li class="project project--featured">
-          <div class="project__featured-text">
-            <div class="project__meta">
-              <span class="tag">Flagship project</span>
-              <span class="tag tag--muted">Finance • Data analytics</span>
-              <span class="tag tag--muted">JavaScript • Python • SEC EDGAR</span>
-            </div>
-            <h3 class="project__title">FinanceIQ</h3>
-            <p class="project__body">
-              A financial research tool that reads ten years of annual reports for 38 public
-              companies straight from the SEC and turns them into ratings, screens and
-              valuations that show their working.
-            </p>
-            <ul class="project__list">
-              <li><strong>Stock ratings:</strong> each company graded on fundamentals, earnings momentum and financial quality, with every measure shown.</li>
-              <li><strong>Screener and search:</strong> sort, filter and look up any company by ticker or name.</li>
-              <li><strong>DCF valuation simulator:</strong> scenarios, sensitivity table and reverse DCF.</li>
-              <li><strong>Tested:</strong> every formula has automated tests and figures are checked against the filings.</li>
-            </ul>
-            <div class="project__links">
-              <a href="financeiq/" class="btn btn--primary">Open FinanceIQ</a>
-              <a href="financeiq/index.html?tour=1" class="btn btn--ghost">2-minute tour</a>
-            </div>
-            <p class="project__more">
-              <a href="financeiq/research.html">My research</a> ·
-              <a href="financeiq/methodology.html">Methodology</a> ·
-              <a href="financeiq/reports/FinanceIQ-sample-report-AAPL-MSFT.pdf">Sample report (PDF)</a> ·
-              <a href="financeiq/about.html">About the project</a>
-            </p>
-          </div>
-          <a href="financeiq/" class="project__preview" aria-label="Open FinanceIQ">
-            <img src="financeiq/preview.png?v=3.0.1" alt="FinanceIQ company page for Microsoft, showing its stock rating and category grades" width="1280" height="1010" loading="lazy" />
-          </a>
-        </li>
-        <li class="project">
-          <div class="project__meta">
-            <span class="tag">Game</span>
-            <span class="tag tag--muted">Python • Ursina</span>
-          </div>
-          <h3 class="project__title">Python Horizon</h3>
-          <p class="project__body">
-            An open-world arcade racing game in the Forza Horizon spirit, built from scratch in
-            Python with Ursina + Panda3D. 1&nbsp;km² procedural terrain, Catmull-Rom road splines,
-            Poisson-disk prop placement, and arcade car physics with proper weight transfer and
-            handbrake drift.
-          </p>
-          <!-- TODO: replace # with the real URL once Python Horizon is pushed to GitHub -->
-          <a href="#" class="project__link">View on GitHub →</a>
-        </li>
-        <li class="project">
-          <div class="project__meta">
-            <span class="tag">Web</span>
-            <span class="tag tag--muted">HTML • CSS</span>
-          </div>
-          <h3 class="project__title">This website</h3>
-          <p class="project__body">
-            The site you're on now. Hand-built with no frameworks, deployed from GitHub to
-            Cloudflare under <code>ivanglushchenko.com</code>. Dark mode by default, responsive
-            down to phones.
-          </p>
-          <a href="https://github.com/ivanglu/ivanglu.github.io" class="project__link">View on GitHub →</a>
-        </li>
-        <!-- TODO: add a third project card here (school project, hackathon, script, etc.) -->
-      </ul>
-    </section>
-
     <section id="contact" class="section section--muted">
       <h2 class="section__title">Contact</h2>
       <p class="contact__blurb">
-        Shoot me a message about anything — questions, interesting opportunities, or just to say hi.
+        Send me a message about anything: questions, interesting opportunities, or just to say hi.
       </p>
       <ul class="contact__list">
         <li>
           <a href="mailto:ivanglushchenko26@gmail.com" class="contact__item">
-            <span class="contact__icon" aria-hidden="true">✉️</span>
+            <svg class="contact__icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>
             <span class="contact__label">Email</span>
             <span class="contact__value">ivanglushchenko26@gmail.com</span>
           </a>
         </li>
         <li>
           <a href="https://github.com/ivanglu" class="contact__item">
-            <span class="contact__icon" aria-hidden="true">🐙</span>
+            <svg class="contact__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>
             <span class="contact__label">GitHub</span>
             <span class="contact__value">@ivanglu</span>
           </a>
         </li>
-        <!-- TODO: add LinkedIn here once you have a profile -->
       </ul>
     </section>
   </main>
 
   <footer class="footer">
-    <p>© <span id="year">2026</span> Ivan Glushchenko. Built with HTML + CSS, hosted on GitHub Pages.</p>
+    <p>© <span id="year">2026</span> Ivan Glushchenko · Hand-built with HTML, CSS and JavaScript · <a href="financeiq/">FinanceIQ</a></p>
   </footer>
 
-  <script src="script.js" defer></script>
+  <script src="script.js?v=3.1.0" defer></script>
 </body>
 </html>

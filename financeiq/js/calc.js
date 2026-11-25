@@ -151,6 +151,9 @@ const Calc = (() => {
       q.ttmRevenueGrowth = growth(y.ttmRevenue, q.ttmRevenue);
       q.ttmEpsGrowth = growth(y.ttmEps, q.ttmEps);
       q.ttmOpIncomeGrowth = growth(y.ttmOpIncome, q.ttmOpIncome);
+      q.ttmGrossProfitGrowth = growth(y.ttmGrossProfit, q.ttmGrossProfit);
+      q.ttmNetMargin = q.ttmRevenue > 0 ? div(q.ttmNetIncome, q.ttmRevenue) : null;
+      q.ttmOpMargin = q.ttmRevenue > 0 ? div(q.ttmOpIncome, q.ttmRevenue) : null;
       q.ttmOpMarginChange = isNum(q.ttmOpIncome) && isNum(y.ttmOpIncome) && q.ttmRevenue > 0 && y.ttmRevenue > 0
         ? q.ttmOpIncome / q.ttmRevenue - y.ttmOpIncome / y.ttmRevenue : null;
     });
@@ -162,11 +165,14 @@ const Calc = (() => {
     const L = company.latest || {};
     const ttmFcf = isNum(L.ttmOperatingCashFlow) && isNum(L.ttmCapex) ? L.ttmOperatingCashFlow - L.ttmCapex : null;
     company.Q = Q;
+    company.prevQ = P;                           // the quarter before the latest one
+    company.prevQ2 = qs[qs.length - 3] || {};
     company.ttm = {
       asOf: Q.end || null, revenue: Q.ttmRevenue, netIncome: Q.ttmNetIncome, eps: Q.ttmEps, opIncome: Q.ttmOpIncome,
       grossProfit: Q.ttmGrossProfit, operatingCashFlow: L.ttmOperatingCashFlow, capex: L.ttmCapex, freeCashFlow: ttmFcf,
       revenueGrowth: Q.ttmRevenueGrowth, epsGrowth: Q.ttmEpsGrowth, opIncomeGrowth: Q.ttmOpIncomeGrowth,
       opMargin: div(Q.ttmOpIncome, Q.ttmRevenue), opMarginChange: Q.ttmOpMarginChange,
+      grossProfitGrowth: Q.ttmGrossProfitGrowth, netMargin: Q.ttmNetMargin,
     };
     company.momentum = {
       epsAccel: accel("epsGrowth"), revenueAccel: accel("revenueGrowth"), opIncomeAccel: accel("opIncomeGrowth"),
@@ -191,6 +197,36 @@ const Calc = (() => {
     company.cagr5 = cagrOf(company, "revenue", 5);
     const growths = company.years.slice(-5).map((v) => v.growth).filter(isNum);
     company.growthYears = growths.length >= 4 ? growths.filter((g) => g > 0).length / growths.length : null;
+    company.piotroski = piotroski(company);
+  }
+
+  // Piotroski F-Score: nine yes/no tests of profitability, balance sheet and efficiency,
+  // comparing the latest fiscal year with the one before (Piotroski, 2000).
+  // Two simplifications, both documented: leverage uses total debt (not long-term debt only),
+  // and "no new shares" uses the diluted share count, allowing 0.5% for routine option grants.
+  // Returns null if fewer than 8 of the 9 tests can be calculated.
+  function piotroski(company) {
+    const y = company.L, p = yearBack(company, 1), pp = yearBack(company, 2);
+    if (!p || !pp) return null;
+    const roa = (a, start) => div(a.netIncome, start.assets);              // return on beginning-of-year assets
+    const lev = (a) => div(a.debt, a.assets);
+    const turn = (a, start) => div(a.revenue, start.assets);
+    const test = (label, why, a, b, pass) => ({ label, why, pass: isNum(a) && isNum(b) ? pass(a, b) : null });
+    const tests = [
+      test("Positive return on assets", "Net income was positive.", y.netIncome, 0, (a) => a > 0),
+      test("Positive operating cash flow", "The business brought in cash.", y.operatingCashFlow, 0, (a) => a > 0),
+      test("Return on assets improved", "Profit per dollar of assets rose on the year before.", roa(y, p), roa(p, pp), (a, b) => a > b),
+      test("Cash flow exceeds profit", "Operating cash flow was larger than net income, so profit is backed by cash.", y.operatingCashFlow, y.netIncome, (a, b) => a > b),
+      test("Debt fell relative to assets", "Total debt ÷ total assets went down.", lev(y), lev(p), (a, b) => a < b),
+      test("Current ratio improved", "Short-term assets covered short-term bills better than a year earlier.", y.currentRatio, p.currentRatio, (a, b) => a > b),
+      test("No new shares issued", "The diluted share count did not rise (0.5% allowed for routine grants).", y.dilutedShares, p.dilutedShares, (a, b) => a <= b * 1.005),
+      test("Gross margin improved", "Gross profit per dollar of sales rose.", y.grossMargin, p.grossMargin, (a, b) => a > b),
+      test("Asset turnover improved", "Sales per dollar of beginning assets rose.", turn(y, p), turn(p, pp), (a, b) => a > b),
+    ];
+    const known = tests.filter((t) => t.pass !== null);
+    if (known.length < 8) return { score: null, available: known.length, tests, fy: y.fy };
+    const passed = known.filter((t) => t.pass).length;
+    return { score: passed, available: known.length, share: passed / known.length, tests, fy: y.fy };
   }
 
   /* ---------------- valuation multiples ---------------- */
@@ -594,7 +630,7 @@ const Calc = (() => {
   return {
     isNum, div, clamp, avg, growth, cagr, median, derive, yearBack, cagrOf,
     scale, SCORE_MODEL, PRESETS, normalizeWeights, scoreCompany, band, highlights,
-    dcf, sensitivity, upside, dcfDefaults, reverseDcf, wacc, valuation, deriveQuarters, percentile, peerStats,
+    dcf, sensitivity, upside, dcfDefaults, reverseDcf, wacc, valuation, deriveQuarters, piotroski, percentile, peerStats,
     money, pct, ratio, perShare, shares, fmt, STATUTORY_TAX_RATE,
   };
 })();

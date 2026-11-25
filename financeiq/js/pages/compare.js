@@ -93,16 +93,31 @@
     },
   };
 
-  function panel(p, A, B) {
+  // With more than two companies, the pairwise sentences give way to a ranking.
+  const RANK = {
+    revenue: ["revenue growth per year over five years", (c) => c.cagr, (v) => pct(v)],
+    profit: ["net margin", (c) => c.L.netMargin, (v) => pct(v)],
+    debt: ["cash minus debt", (c) => c.L.netCash, (v) => money(v)],
+    cash: ["free cash flow margin", (c) => c.L.fcfMargin, (v) => pct(v)],
+  };
+  function ranking(id, cs) {
+    const [what, get, show] = RANK[id];
+    const order = cs.filter((c) => isNum(get(c))).sort((x, y) => get(y) - get(x));
+    const missing = cs.filter((c) => !isNum(get(c)));
+    return para(`Ranked by ${what}, highest first: ${order.map((c) => `<strong>${esc(c.name)}</strong> (${show(get(c))})`).join(", ")}.${missing.length ? ` Not available for ${missing.map((c) => esc(c.name)).join(" and ")}.` : ""}`)
+      + `<p class="fq-why">With two companies selected this box explains the difference in sentences. Take companies out to see that.</p>`;
+  }
+
+  function panel(p, A, B, cs) {
     const active = tabs[p.id] || p.keys[0];
     const buttons = p.keys.map((k) => `<button type="button" data-panel="${p.id}" data-key="${k}" aria-pressed="${k === active}">${Views.METRICS[k].label}</button>`).join("");
     return `
     <article class="fq-card" id="panel-${p.id}">
       <div class="fq-panel__head"><h3>${p.title}</h3><div class="fq-seg" role="group" aria-label="${p.title} chart">${buttons}</div></div>
       <p class="fq-panel__what">${p.what}</p>
-      ${Views.legend(A, B)}
+      ${Views.legend(cs)}
       <div class="fq-chart" data-chart="${p.id}"></div>
-      <div class="fq-plain"><h4>In plain English</h4>${explain[p.id](A, B)}</div>
+      <div class="fq-plain"><h4>In plain English</h4>${cs.length > 2 ? ranking(p.id, cs) : explain[p.id](A, B)}</div>
     </article>`;
   }
 
@@ -113,7 +128,7 @@
     <article class="fq-card fq-ai">
       <h3>${swatch(i)}${esc(c.name)}</h3>
       ${s ? `<h4>Strengths</h4>${list(s.strengths)}<h4>Risks</h4>${list(s.risks)}`
-          : `<p class="fq-empty">No AI summary has been written for ${esc(c.name)} yet. The rule-based strengths and weaknesses on the <a data-nav="health.html" href="health.html#${Core.state.a}-${Core.state.b}">Financial Health</a> page cover every company.</p>`}
+          : `<p class="fq-empty">No AI summary has been written for ${esc(c.name)} yet. The rule-based strengths and weaknesses on its <a href="company.html#${c.ticker}">company page</a> cover every company.</p>`}
       <p class="fq-ai__src">
         <a href="${esc(c.L.url)}" target="_blank" rel="noopener">Latest annual report: 10-K for fiscal ${c.L.fy}, filed ${c.L.filed} ↗</a>
         <a href="${esc(c.filingsUrl)}" target="_blank" rel="noopener">All ${esc(c.name)} 10-K filings on SEC EDGAR ↗</a>
@@ -126,47 +141,53 @@
 
   Core.start({
     page: "compare",
-    usesPair: true,
-    render(A, B) {
-      pair = [A, B];
+    mode: "pair",
+    multi: true,            // this page accepts up to four companies
+    render(A, B, extra = []) {
+      const cs = [A, B, ...extra];
+      pair = cs;
+      cs.forEach((c, i) => { c._slot = i; });
       const s = Core.state.summaries;
-      const ra = Core.rating(A.ticker), rb = Core.rating(B.ticker);
-      const gradeRow = (label, x, y) => `<tr><td>${label}</td><td><span class="fq-gcell">${Views.scoreText(x.score !== undefined ? x.score : x.overall)}${Views.gradeBox(x.grade, "sm")}</span></td><td><span class="fq-gcell">${Views.scoreText(y.score !== undefined ? y.score : y.overall)}${Views.gradeBox(y.grade, "sm")}</span></td></tr>`;
+      const rs = cs.map((c) => Core.rating(c.ticker));
+      const cell = (x) => `<td><span class="fq-gcell">${Views.scoreText(x.score !== undefined ? x.score : x.overall)}${Views.gradeBox(x.grade, "sm")}</span></td>`;
+      const allComplete = rs.every((r) => r.complete);
+      const head = cs.map((c, i) => `<th><span class="fq-th">${swatch(i)}<a href="company.html#${c.ticker}">${esc(c.name)}</a></span></th>`).join("");
+      const many = cs.length > 2;
       $("#app").innerHTML = `
         <section class="fq-section" id="ratings">
           <h2>Stock ratings</h2>
-          <p class="fq-sub">Each company graded on the same five categories. Open a company's page for every measure behind a grade.</p>
+          <p class="fq-sub">Each company graded on the same five categories. Open a company's page for every measure behind a grade.${many ? "" : " Use \"Add a company\" above to compare up to four."}</p>
           <div class="fq-card"><div class="fq-tablewrap"><table class="fq-table">
-            <thead><tr><th>Category</th><th><span class="fq-th">${swatch(0)}<a href="company.html#${A.ticker}">${esc(A.name)}</a></span></th><th><span class="fq-th">${swatch(1)}<a href="company.html#${B.ticker}">${esc(B.name)}</a></span></th></tr></thead>
-            <tbody>${ra.categories.map((k, i) => gradeRow(`${esc(k.label)} <span class="fq-muted">· ${k.weight.toFixed(0)}%</span>`, k, rb.categories[i])).join("")}
-              <tr class="fq-strong">${gradeRow(ra.complete && rb.complete ? "Overall rating" : "Partial rating", ra, rb).slice(4, -5)}</tr></tbody>
+            <thead><tr><th>Category</th>${head}</tr></thead>
+            <tbody>${rs[0].categories.map((k, i) => `<tr><td>${esc(k.label)} <span class="fq-muted">· ${k.weight.toFixed(0)}%</span></td>${rs.map((r) => cell(r.categories[i])).join("")}</tr>`).join("")}
+              <tr class="fq-strong"><td>${allComplete ? "Overall rating" : "Partial rating"}</td>${rs.map((r) => cell(r)).join("")}</tr></tbody>
           </table></div>
-          ${ra.complete && rb.complete ? "" : `<p class="fq-small fq-muted" style="margin:10px 0 0">Partial: ${esc(ra.missing.join(" and "))} need market data, which is not connected.</p>`}</div>
+          ${allComplete ? "" : `<p class="fq-small fq-muted" style="margin:10px 0 0">Partial: ${esc(rs[0].missing.join(" and "))} need market data, which is not connected.</p>`}</div>
         </section>
         <section class="fq-section" id="health">
           <h2>Financial Health Score</h2>
-          <p class="fq-sub">A separate view of the business alone, on fixed scales. <a data-nav="health.html" href="health.html#${A.ticker}-${B.ticker}">See the breakdown and change the weights</a>.</p>
-          <div class="fq-two">${Views.healthCard(A, 0, Core.score(A))}${Views.healthCard(B, 1, Core.score(B))}</div>
+          <p class="fq-sub">A separate view of the business alone, on fixed scales. <a data-nav="health.html" href="health.html#${A.ticker}-${B.ticker}">See the breakdown and change the weights</a>${many ? " (for the first two companies)" : ""}.</p>
+          <div class="${many ? "fq-four" : "fq-two"}">${cs.map((c, i) => Views.healthCard(c, i, Core.score(c))).join("")}</div>
         </section>
         <section class="fq-section fq-scorecard" id="scorecard">
           <h2>Scorecard</h2>
-          <p class="fq-sub">The headline numbers from each company's latest annual report. A check mark shows which company is ahead on that measure.</p>
-          <div class="fq-card">${Views.scorecard(A, B)}</div>
+          <p class="fq-sub">The headline numbers from each company's latest annual report. A check mark shows which company leads on that measure.</p>
+          <div class="fq-card">${Views.scorecard(cs)}</div>
         </section>
         <section class="fq-section" id="charts">
           <h2>The four tests</h2>
-          <p class="fq-sub">Ten years of history. Move your pointer over a chart to read exact values, and use the buttons to switch measures.</p>
-          <div class="fq-grid">${PANELS.map((p) => panel(p, A, B)).join("")}</div>
+          <p class="fq-sub">Ten years of history. Move your pointer over a chart, or press Tab to reach it and use the arrow keys, to read exact values.</p>
+          <div class="fq-grid">${PANELS.map((p) => panel(p, A, B, cs)).join("")}</div>
         </section>
         <section class="fq-section" id="ai">
           <h2>Strengths and risks <span class="fq-badge">AI-generated</span></h2>
           <p class="fq-sub">Written by ${esc(s.model)}, an AI model, from the figures on this site on ${esc(s.generated)}. AI can be wrong, so each summary links to the original report. Calculations on this site never use AI.</p>
-          <div class="fq-two">${aiCard(A, 0)}${aiCard(B, 1)}</div>
+          <div class="fq-two">${cs.map((c, i) => aiCard(c, i)).join("")}</div>
         </section>
         <section class="fq-section" id="sources">
           <h2>The numbers and their sources</h2>
           <p class="fq-sub">The main figures used above, with the date each report was filed and a link to it.</p>
-          <div class="fq-grid">${Views.sourceTable(A, 0)}${Views.sourceTable(B, 1)}</div>
+          <div class="fq-grid">${cs.map((c, i) => Views.sourceTable(c, i)).join("")}</div>
         </section>`;
       draw();
     },

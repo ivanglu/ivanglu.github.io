@@ -63,7 +63,8 @@ const Views = (() => {
     });
   }
 
-  const legend = (A, B) => `<div class="fq-legend"><span>${swatch(0)}${esc(A.name)}</span><span>${swatch(1)}${esc(B.name)}</span></div>`;
+  // legend(A, B) or legend(A, B, C, D): one entry per company, in slot order
+  const legend = (...cs) => `<div class="fq-legend">${cs.flat().map((c, i) => `<span>${swatch(i)}${esc(c.name)}</span>`).join("")}</div>`;
 
   /* ---------------- Financial Health Score ---------------- */
 
@@ -99,15 +100,18 @@ const Views = (() => {
     { label: "Earnings per share", term: "eps", hint: "Diluted, latest fiscal year", get: (c) => c.L.eps, fmt: "perShare", better: null },
   ];
 
-  function scorecard(A, B) {
-    const wins = [0, 0];
+  // Scorecard for two to four companies. The best value on each measure gets the check mark.
+  function scorecard(...args) {
+    const cs = args.flat();
+    const wins = cs.map(() => 0);
     let judged = 0, derived = false;
     const rows = SCORE_ROWS.map((r) => {
-      const va = r.get(A), vb = r.get(B);
+      const vals = cs.map((c) => r.get(c));
       let lead = -1;
-      if (r.better && isNum(va) && isNum(vb) && va !== vb) {
-        lead = (r.better === "high" ? va > vb : va < vb) ? 0 : 1;
-        wins[lead]++; judged++;
+      const known = vals.filter(isNum);
+      if (r.better && known.length === cs.length && new Set(known).size > 1) {
+        const best = r.better === "high" ? Math.max(...known) : Math.min(...known);
+        if (vals.filter((v) => v === best).length === 1) { lead = vals.indexOf(best); wins[lead]++; judged++; }
       }
       const cell = (v, i, c) => {
         let text = fmt(v, r.fmt);
@@ -115,19 +119,19 @@ const Views = (() => {
         if (r.term === "opMargin" && c.L.ebitDerived && isNum(v)) { text += "†"; derived = true; }
         return `<td class="${lead === i ? "fq-lead" : ""}">${text}</td>`;
       };
-      return `<tr><td><span class="fq-metric">${term(r.term, r.label)}</span><span class="fq-hint">${r.hint}</span></td>${cell(va, 0, A)}${cell(vb, 1, B)}</tr>`;
+      return `<tr><td><span class="fq-metric">${term(r.term, r.label)}</span><span class="fq-hint">${r.hint}</span></td>${vals.map((v, i) => cell(v, i, cs[i])).join("")}</tr>`;
     }).join("");
+    const tally = cs.map((c, i) => `<strong>${esc(c.name)} ${wins[i]}</strong>`);
     return `
       <div class="fq-tablewrap"><table class="fq-table">
-        <thead><tr><th>Measure</th>
-          <th><span class="fq-th">${swatch(0)}${esc(A.name)} · FY${A.L.fy}</span></th>
-          <th><span class="fq-th">${swatch(1)}${esc(B.name)} · FY${B.L.fy}</span></th></tr></thead>
+        <thead><tr><th>Measure</th>${cs.map((c, i) => `<th><span class="fq-th">${swatch(i)}${esc(c.name)} · FY${c.L.fy}</span></th>`).join("")}</tr></thead>
         <tbody>${rows}</tbody>
       </table></div>
-      <p class="fq-tally">Of the ${judged} measures compared, <strong>${esc(A.name)} is ahead on ${wins[0]}</strong> and <strong>${esc(B.name)} on ${wins[1]}</strong>.
+      <p class="fq-tally">Measures led, out of ${judged} with a clear leader: ${tally.join(", ")}.
       A count like this treats every measure as equally important, which they are not. Deciding which ones matter most takes judgement.</p>
       ${derived ? `<p class="fq-small fq-muted">† This company does not report an operating income line. It is rebuilt here as pre-tax income plus interest expense.</p>` : ""}`;
   }
+
 
   /* ---------------- source tables ---------------- */
 
@@ -238,13 +242,14 @@ const Views = (() => {
     const rows = cat.factors.map((f) => `
       <tr><td>${esc(f.label)}<span class="fq-hint">${esc(f.why)} ${f.higher ? "Higher is better." : "Lower is better."} Scale: 0 at ${rfmt(f.lo, f.fmt)}, 100 at ${rfmt(f.hi, f.fmt)}.</span></td>
         <td>${isNum(f.value) ? rfmt(f.value, f.fmt) : f.note ? `<span class="fq-term" tabindex="0" data-tip="${esc(f.note)}">${isNum(f.score) ? "see note" : "n/a"}</span>` : "n/a"}</td>
+        <td class="fq-hide-sm">${isNum(f.previous) ? `${rfmt(f.previous, f.fmt)}<span class="fq-hint">${esc(f.prevLabel)}</span>` : "–"}</td>
         ${hasPeers ? `<td class="fq-hide-sm">${rfmt(f.peerMedian, f.fmt)}</td>` : ""}
         <td class="fq-hide-sm">${rfmt(f.universeMedian, f.fmt)}</td>
         <td class="fq-hide-sm">${scoreText(f.absolute)}</td><td class="fq-hide-sm">${scoreText(f.rank)}</td>
         <td><span class="fq-gcell"><b>${scoreText(f.score)}</b>${gradeBox(f.grade, "sm")}</span></td></tr>`).join("");
     return `
       <div class="fq-tablewrap"><table class="fq-table fq-table--dense">
-        <thead><tr><th>Measure</th><th>${esc(company.ticker)}</th>${hasPeers ? `<th class="fq-hide-sm">${esc(company.group)} median</th>` : ""}
+        <thead><tr><th>Measure</th><th>${esc(company.ticker)}</th><th class="fq-hide-sm">Previous</th>${hasPeers ? `<th class="fq-hide-sm">${esc(company.group)} median</th>` : ""}
           <th class="fq-hide-sm">Median of ${Core.state.list.length}</th><th class="fq-hide-sm">Scale score</th><th class="fq-hide-sm">${term("percentile", "Rank score")}</th><th>Score</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>

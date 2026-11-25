@@ -10,7 +10,7 @@
   --surface-2: #10131a;
   --fg: #e8ecf4;
   --fg-muted: #a2abba;
-  --fg-dim: #707a8a;
+  --fg-dim: #7d8797;
   --accent: #6ea0ff;
   --accent-ink: #0b1220;
   --bad: #e06c6c;
@@ -20,6 +20,8 @@
   --grid: #232a38;
   --series-a: #3987e5;      /* company A: blue */
   --series-b: #d95926;      /* company B: orange */
+  --series-c: #199e70;      /* company C: green */
+  --series-d: #c98500;      /* company D: amber */
   --good: #35b37e;
   --warn: #fab219;
   --radius: 12px;
@@ -30,23 +32,26 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-body.fq-light {
+body.fq-light,
+html[data-theme="light"] body:not([data-fixed-theme]) {
   --bg: #ffffff;
   --surface: #ffffff;
   --surface-2: #f5f6f8;
   --fg: #14171c;
   --fg-muted: #4c5564;
-  --fg-dim: #6f7887;
+  --fg-dim: #5f6877;
   --accent: #1f4fa3;
   --accent-ink: #ffffff;
   --good: #0a7d3c;
   --bad: #b3372f;
-  --amber: #9a6a00;
+  --amber: #865c00;
   --border: #dfe3ea;
   --border-strong: #c5ccd8;
   --grid: #e6e9ef;
   --series-a: #2a78d6;
-  --series-b: #d95926;
+  --series-b: #eb6834;
+  --series-c: #1baf7a;
+  --series-d: #eda100;
   --shadow: none;
 }
 
@@ -92,10 +97,10 @@ code { font-family: var(--font-mono); font-size: 0.9em; background: var(--surfac
 
 /* ---------------- Page header and picker ---------------- */
 
-.fq-hero { padding-top: 40px; padding-bottom: 4px; }
+.fq-hero { padding-top: 28px; padding-bottom: 4px; }
 .fq-eyebrow { color: var(--accent); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 10px; }
-.fq-hero h1 { font-size: clamp(27px, 4vw, 40px); margin: 0 0 12px; letter-spacing: -0.02em; text-wrap: balance; }
-.fq-lede { color: var(--fg-muted); max-width: 72ch; margin: 0 0 22px; font-size: 17px; }
+.fq-hero h1 { font-size: clamp(25px, 3.2vw, 34px); margin: 0 0 10px; letter-spacing: -0.02em; text-wrap: balance; }
+.fq-lede { color: var(--fg-muted); max-width: 72ch; margin: 0 0 20px; font-size: 16.5px; }
 
 .fq-picker { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding: 14px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); }
 .fq-pick { flex: 1 1 200px; display: grid; gap: 6px; }
@@ -165,7 +170,7 @@ a.fq-btn { display: inline-block; }
 .fq-table--dense th, .fq-table--dense td { padding: 7px 9px; }
 .fq-table .fq-strong td { font-weight: 700; border-top: 1px solid var(--border-strong); }
 .fq-table .fq-sel { background: rgba(255, 255, 255, 0.04); }
-body.fq-light .fq-table .fq-sel { background: rgba(0, 0, 0, 0.04); }
+body.fq-light .fq-table .fq-sel, html[data-theme="light"] body:not([data-fixed-theme]) .fq-table .fq-sel { background: rgba(0, 0, 0, 0.04); }
 .fq-table .fq-group td { font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-muted); font-weight: 700; padding-top: 18px; }
 .fq-metric { font-weight: 600; }
 .fq-hint { display: block; color: var(--fg-dim); font-size: 12.5px; font-weight: 400; white-space: normal; }
@@ -430,11 +435,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; heigh
 .fq-up { color: var(--good); } .fq-down { color: var(--bad); }
 
 /* company header */
-.fq-cohead { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px 28px; flex-wrap: wrap; padding-top: 26px; }
+.fq-cohead { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 18px 32px; padding-top: 24px; }
+@media (max-width: 760px) { .fq-cohead { grid-template-columns: 1fr; } }
 .fq-cohead h1 { font-size: clamp(24px, 3.4vw, 34px); margin: 0 0 4px; letter-spacing: -0.02em; }
 .fq-cohead__meta { color: var(--fg-muted); font-size: 14.5px; display: flex; gap: 6px 14px; flex-wrap: wrap; }
 .fq-cohead__actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
-.fq-cohead__rating { display: flex; align-items: center; gap: 14px; }
+.fq-cohead__rating { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; }
 .fq-cohead__rating div { display: grid; font-size: 13.5px; color: var(--fg-muted); }
 .fq-cohead__rating strong { font-size: 22px; color: var(--fg); font-variant-numeric: tabular-nums; }
 .fq-compare-with { width: 210px; }
@@ -448,7 +454,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; heigh
 .fq-tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
 
 /* rating cards */
-.fq-ratings { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.fq-ratings { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 900px) { .fq-ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .fq-ratings { grid-template-columns: 1fr; } }
 .fq-rcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; display: grid; gap: 8px; align-content: start; }
 .fq-rcard h3 { margin: 0; font-size: 13.5px; color: var(--fg-muted); font-weight: 600; }
 .fq-rcard__row { display: flex; align-items: center; gap: 10px; }
@@ -503,3 +511,34 @@ details.fq-factors > div { padding: 0 14px 14px; }
   .fq-cohead__rating { width: 100%; }
 }
 @media print { .fq-subnav, .fq-combo__list { display: none !important; } }
+
+/* ---------- version 3.1 additions ---------- */
+
+/* four health cards side by side when four companies are compared */
+.fq-four { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.fq-four .fq-health__score strong { font-size: 44px; }
+
+/* picker: room for up to four companies */
+.fq-pick--add input { border-style: dashed; }
+.fq-linkbtn { background: none; border: 0; padding: 0 0 0 6px; color: var(--accent); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.fq-linkbtn:hover { text-decoration: underline; }
+
+/* keyboard users see where they are */
+.fq-tabs button:focus-visible, .fq-seg button:focus-visible, .fq-chip:focus-visible, .fq-star:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* skip link: first thing a keyboard user reaches */
+.fq-skip { position: absolute; left: 12px; top: 0; transform: translateY(-150%); z-index: 100; background: var(--accent); color: var(--accent-ink); padding: 8px 12px; border-radius: var(--radius-sm); font-weight: 600; }
+.fq-skip:focus { transform: translateY(10px); text-decoration: none; }
+
+/* tablet: keep two columns where there is room, and stop wide tables pushing the page */
+@media (min-width: 641px) and (max-width: 1000px) {
+  .fq-wrap, .fq-hero, .fq-main, .fq-footer, .fq-top__bar { padding-left: 20px; padding-right: 20px; }
+  .fq-dash { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* screen readers only */
+.fq-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+main[tabindex="-1"]:focus { outline: none; }

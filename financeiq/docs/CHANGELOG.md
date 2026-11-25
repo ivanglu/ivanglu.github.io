@@ -1,5 +1,35 @@
 # Changelog
 
+## 3.1.0 (25 November 2026, on branch `site-polish`, not yet deployed)
+
+### Added
+- **Compare up to four companies** on the Compare summary page (`compare.html#AAPL-MSFT-NVDA-GOOGL`): ratings,
+  health scores, scorecard, charts, AI summaries and source tables. "Add a company" and "take out" in the picker.
+  The screener and watchlist can send two to four companies. The other comparison pages stay at two.
+- **Previous value** for each rating measure (previous quarter or previous fiscal year), shown next to the current one.
+- **Four more Fundamental measures:** quarterly net income growth, trailing gross profit growth, trailing net
+  margin and annual free cash flow growth.
+- **Piotroski F-Score** as a Financial quality measure, with all nine tests shown on the company Financials tab.
+- Two more chart colors (green and amber) for companies C and D, checked for colorblind separation.
+- Skip-to-content links and visible keyboard focus on tabs, buttons and chips.
+
+### Changed
+- Rating methodology version 1.0 → 1.1 (the added measures). Today's snapshot was retaken with 1.1; there were
+  no earlier dates to compare with.
+- **Theme:** follows the device's light or dark setting until a choice is made, and the choice is shared with the main site.
+- **Contrast:** dim text and amber made darker or lighter so every text color meets 4.5:1 in both themes.
+- Calmer page headings; the company rating sits beside the company name on wide screens; rating cards in a
+  3 × 2 grid instead of a ragged row.
+
+### Main site (ivanglushchenko.com)
+- Compact first screen instead of a full-height one; FinanceIQ is one click from the top.
+- Projects come first. FinanceIQ spans the full width; the other two projects sit side by side.
+- Same palette as FinanceIQ, with light and dark themes and a toggle.
+- Simple line icons instead of emoji; an "IG" favicon; link previews for social media and messaging (Open Graph).
+- The broken "View on GitHub" link on Python Horizon (it pointed nowhere) became "Source code not published yet".
+- Reminder comments removed from the public page and listed in the README.
+- New 404 page. The README now has the right domain and publishing steps.
+
 ## 3.0.1 (25 November 2026)
 
 ### Fixed

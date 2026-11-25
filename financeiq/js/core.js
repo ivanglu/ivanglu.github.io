@@ -17,7 +17,9 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 const Core = (() => {
   const SITE_URL = "https://ivanglushchenko.com/financeiq/";
   const DEFAULT_PAIR = ["AAPL", "MSFT"];
-  const COLORS = ["var(--series-a)", "var(--series-b)"];
+  // One color per company slot, in a fixed order: A blue, B orange, C green, D amber. Checked for colorblind separation.
+  const COLORS = ["var(--series-a)", "var(--series-b)", "var(--series-c)", "var(--series-d)"];
+  const MAX_COMPARE = 4;
 
   // Main navigation. `section` groups the comparison pages under one entry.
   const NAV = [
@@ -88,7 +90,7 @@ const Core = (() => {
     relativeStrength: "A share's return minus the return of a benchmark over the same period.",
   };
 
-  const state = { data: null, summaries: null, byTicker: {}, list: [], a: null, b: null, cfg: null, market: null, marketInfo: null, ratings: {}, history: [] };
+  const state = { data: null, summaries: null, byTicker: {}, list: [], a: null, b: null, extra: [], cfg: null, market: null, marketInfo: null, ratings: {}, history: [] };
 
   /* ---------------- small helpers ---------------- */
 
@@ -182,8 +184,8 @@ const Core = (() => {
     };
     const open = () => {
       const text = input.value.trim();
-      const skip = exclude();
-      items = (text ? Screen.search(state.list, text, 10) : emptyList()).filter((c) => c.ticker !== skip);
+      const skip = [].concat(exclude() || []);
+      items = (text ? Screen.search(state.list, text, 10) : emptyList()).filter((c) => !skip.includes(c.ticker));
       if (!items.length) {
         list.innerHTML = `<li class="fq-combo__none" role="option" aria-disabled="true">${text ? `No supported company matches "${esc(text)}". FinanceIQ tracks ${state.list.length} companies.` : "Type a ticker or company name"}</li>`;
       } else {
@@ -220,11 +222,11 @@ const Core = (() => {
 
   /* ---------------- selection ---------------- */
 
-  // #NVDA -> ["NVDA"], #NVDA-MSFT -> ["NVDA", "MSFT"], anything else -> null
+  // #NVDA -> ["NVDA"], #NVDA-MSFT -> ["NVDA", "MSFT"], #NVDA-MSFT-AMD-INTC -> up to four. Unknown or repeated tickers are dropped.
   function fromHash() {
-    const m = location.hash.match(/^#([A-Z]+)(?:-([A-Z]+))?$/);
-    if (!m || !known(m[1])) return null;
-    return m[2] && known(m[2]) && m[2] !== m[1] ? [m[1], m[2]] : [m[1]];
+    if (!/^#[A-Z]+(-[A-Z]+){0,3}$/.test(location.hash)) return null;
+    const list = [...new Set(location.hash.slice(1).split("-"))].filter(known);
+    return list.length ? list : null;
   }
 
   // A sensible second company: a peer from the same group, else the default.
@@ -238,12 +240,15 @@ const Core = (() => {
 
   const hashFor = (file) => (SINGLE_FILES.includes(file) ? `#${state.a}` : `#${state.a}-${state.b}`);
 
-  function select(a, b, updateHash = true) {
+  // extra: the third and fourth companies. Only the Compare summary page uses them.
+  function select(a, b, updateHash = true, extra = state.extra) {
     state.a = a; state.b = b || partnerFor(a);
+    state.extra = state.cfg.multi ? (extra || []).filter((t) => known(t) && t !== state.a && t !== state.b).slice(0, MAX_COMPARE - 2) : [];
     store.set("pair", [state.a, state.b]);
     const single = state.cfg.mode === "single";
     if (single) remember(a);
-    if (updateHash) history.replaceState(null, "", location.pathname + location.search + (single ? `#${a}` : `#${state.a}-${state.b}`));
+    const all = [state.a, state.b, ...state.extra].join("-");
+    if (updateHash) history.replaceState(null, "", location.pathname + location.search + (single ? `#${a}` : `#${all}`));
     $$("a[data-nav]").forEach((el) => { el.href = el.dataset.nav + (state.a ? hashFor(el.dataset.nav) : ""); });
     if (state.cfg.mode === "pair") renderPicker();
     return rerender();
@@ -254,34 +259,50 @@ const Core = (() => {
     document.body.classList.remove("fq-is-loading");
     const A = state.byTicker[state.a], B = state.byTicker[state.b];
     if (state.cfg.mode === "single") return state.cfg.render(A);
-    if (state.cfg.mode === "pair") return state.cfg.render(A, B);
+    if (state.cfg.mode === "pair") return state.cfg.render(A, B, state.extra.map((t) => state.byTicker[t]));
     return state.cfg.render();
   }
 
-  // Two search boxes for the comparison pages. Type to filter, or focus to see every company.
+  // Search boxes for the comparison pages. Type to filter, or focus to see every company.
+  // The Compare summary page (cfg.multi) can hold up to four companies; the other comparison pages use two.
   function renderPicker() {
     const host = $("#fq-picker");
     if (!host) return;
     const label = (t) => `${state.byTicker[t].name} (${t})`;
+    const chosen = () => [state.a, state.b, ...state.extra];
+    const box = (id, t, i, name) => `
+      <label class="fq-pick"><span class="fq-pick__label">${swatch(i)}${name}${i >= 2 ? ` <button type="button" class="fq-linkbtn" data-drop="${t}" aria-label="Take ${esc(state.byTicker[t].name)} out of the comparison">take out</button>` : ""}</span>
+        <span class="fq-combo"><input id="${id}" type="text" value="${esc(label(t))}" data-current="${esc(label(t))}" data-empty-label="All companies" aria-label="${name}: type a ticker or name"></span></label>`;
+    const canAdd = state.cfg.multi && chosen().length < MAX_COMPARE;
     host.innerHTML = `
-      <form class="fq-picker" aria-label="Choose two companies">
-        <label class="fq-pick"><span class="fq-pick__label">${swatch(0)}Company A</span>
-          <span class="fq-combo"><input id="pickA" type="text" value="${esc(label(state.a))}" data-current="${esc(label(state.a))}" data-empty-label="All companies" aria-label="Company A: type a ticker or name"></span></label>
-        <button type="button" id="swap" class="fq-swap" title="Swap companies" aria-label="Swap companies">⇄</button>
-        <label class="fq-pick"><span class="fq-pick__label">${swatch(1)}Company B</span>
-          <span class="fq-combo"><input id="pickB" type="text" value="${esc(label(state.b))}" data-current="${esc(label(state.b))}" data-empty-label="All companies" aria-label="Company B: type a ticker or name"></span></label>
-      </form>`;
-    combo($("#pickA"), { keepValue: true, exclude: () => state.b, emptyList: byGroup, onSelect: (t) => select(t, state.b) });
-    combo($("#pickB"), { keepValue: true, exclude: () => state.a, emptyList: byGroup, onSelect: (t) => select(state.a, t) });
+      <form class="fq-picker" aria-label="Choose companies to compare">
+        ${box("pickA", state.a, 0, "Company A")}
+        <button type="button" id="swap" class="fq-swap" title="Swap A and B" aria-label="Swap companies A and B">⇄</button>
+        ${box("pickB", state.b, 1, "Company B")}
+        ${state.extra.map((t, i) => box("pick" + i, t, i + 2, "Company " + "CD"[i])).join("")}
+        ${canAdd ? `<label class="fq-pick fq-pick--add"><span class="fq-pick__label">Add a company (up to ${MAX_COMPARE})</span>
+          <span class="fq-combo"><input id="pickAdd" type="text" placeholder="+ Type a ticker or name" aria-label="Add another company to compare"></span></label>` : ""}
+      </form>
+      ${state.cfg.multi ? "" : `<p class="fq-small fq-muted" style="margin:8px 0 0">This page compares two companies. To compare up to four, use the <a href="compare.html#${chosen().join("-")}">Summary</a> page.</p>`}`;
+    const notIn = (me) => { const o = chosen().filter((t) => t !== me); return () => o; };
+    combo($("#pickA"), { keepValue: true, exclude: notIn(state.a), emptyList: byGroup, onSelect: (t) => select(t, state.b) });
+    combo($("#pickB"), { keepValue: true, exclude: notIn(state.b), emptyList: byGroup, onSelect: (t) => select(state.a, t) });
+    state.extra.forEach((t, i) => combo($("#pick" + i), { keepValue: true, exclude: notIn(t), emptyList: byGroup,
+      onSelect: (n) => select(state.a, state.b, true, state.extra.map((x, k) => (k === i ? n : x))) }));
+    if (canAdd) combo($("#pickAdd"), { exclude: () => chosen(), emptyList: byGroup, onSelect: (n) => select(state.a, state.b, true, [...state.extra, n]) });
     $("#swap").addEventListener("click", () => select(state.b, state.a));
+    $$("[data-drop]", host).forEach((btn) => btn.addEventListener("click", (e) => {
+      e.preventDefault(); select(state.a, state.b, true, state.extra.filter((x) => x !== btn.dataset.drop));
+    }));
     $(".fq-picker", host).addEventListener("submit", (e) => e.preventDefault());
   }
 
   /* ---------------- page furniture ---------------- */
 
+  // The theme is shared with the main site (../theme.js): saved choice, else the device setting.
   const applyTheme = () => {
-    if (document.body.dataset.fixedTheme) return;
-    document.body.classList.toggle("fq-light", store.get("theme", "dark") === "light");
+    if (document.body.dataset.fixedTheme || !window.SiteTheme) return;
+    document.documentElement.setAttribute("data-theme", window.SiteTheme.current());
   };
 
   function renderNav(page) {
@@ -302,7 +323,7 @@ const Core = (() => {
         </span>
       </div>
       <nav class="fq-nav" aria-label="FinanceIQ sections">${links}</nav>${sub}`;
-    $("#fq-theme").addEventListener("click", () => { store.set("theme", store.get("theme", "dark") === "light" ? "dark" : "light"); applyTheme(); window.dispatchEvent(new Event("fq-theme")); });
+    $("#fq-theme").addEventListener("click", () => { if (window.SiteTheme) window.SiteTheme.toggle(); applyTheme(); window.dispatchEvent(new Event("fq-theme")); });
   }
 
   function wireSearch() {
@@ -442,9 +463,10 @@ const Core = (() => {
 
       const saved = store.get("pair", null);
       const sel = fromHash() || (saved && known(saved[0]) ? saved : DEFAULT_PAIR);
+      if (cfg.multi) state.extra = sel.slice(2);
       window.addEventListener("hashchange", () => {
         const p = fromHash();
-        if (p && (p[0] !== state.a || (p[1] && p[1] !== state.b))) select(p[0], p[1] || (cfg.mode === "pair" ? state.b : null), false);
+        if (p && p.join("-") !== [state.a, state.b, ...state.extra].join("-")) select(p[0], p[1] || (cfg.mode === "pair" ? state.b : null), false, p.slice(2));
       });
       // index.html?tour=1 starts the guided tour (used by the link on the main site)
       if (new URLSearchParams(location.search).get("tour") === "1") {
@@ -472,7 +494,7 @@ const Core = (() => {
   }
 
   return {
-    SITE_URL, COLORS, GLOSSARY, state, term, store, getText, poss, swatch, md, parseDoc, combo,
+    SITE_URL, COLORS, MAX_COMPARE, GLOSSARY, state, term, store, getText, poss, swatch, md, parseDoc, combo,
     select, setPair, rerender, start, onResize, tourGo, getWeights, score, ratingWeights, setRatingWeights,
     dcfInputs, saveDcf, resetDcf, watchlist, toggleWatch, ratingChange, byGroup,
     company: (t) => state.byTicker[t],

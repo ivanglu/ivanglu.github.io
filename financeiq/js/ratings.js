@@ -22,12 +22,20 @@
 
 const Ratings = (() => {
   const { isNum, scale, percentile, median } = Calc;
-  const VERSION = "1.0";
+  const VERSION = "1.1";
   const MIN_CATEGORY_COVERAGE = 0.7;
   const MIN_OVERALL_COVERAGE = 0.8;
   const NO_MARKET = "Needs daily share prices, which FinanceIQ does not have yet";
 
   const v = (value, note) => ({ value: isNum(value) ? value : null, note });
+  const yb = (c, n) => Calc.yearBack(c, n) || {};
+  const growth = Calc.growth;
+  // Labels for the "previous" column
+  const PQ = "previous quarter", PY = "previous fiscal year", PY3 = "a year earlier";
+  // Growth of a profit line, with losses handled: a loss now scores 0, a loss in the base year has no growth rate.
+  const profitGrowth = (value, now, before, word) => (isNum(value) ? v(value)
+    : isNum(now) && now <= 0 ? { value: null, score: 0, note: `${word} is negative` }
+    : isNum(before) && before <= 0 ? v(null, `${word} was negative a year earlier, so a growth rate is not meaningful`) : v(null));
 
   // Each factor: lo scores 0 and hi scores 100 on the absolute scale (lo > hi means lower is better).
   // get(c, m) returns { value, score?, note? }. c = company, m = market data for it (or null).
@@ -36,20 +44,39 @@ const Ratings = (() => {
       id: "fundamental", label: "Fundamental performance", short: "Fundamentals", weight: 25, source: "SEC filings",
       about: "Growth in sales, profit and cash flow, and how profitable the business is.",
       factors: [
-        { id: "revQ", label: "Revenue growth, latest quarter", fmt: "pct", lo: -0.05, hi: 0.25, why: "Sales compared with the same quarter a year earlier.", get: (c) => v(c.Q.revenueGrowth) },
-        { id: "revTtm", label: "Revenue growth, trailing 12 months", fmt: "pct", lo: -0.05, hi: 0.25, why: "The last four quarters against the four before.", get: (c) => v(c.ttm.revenueGrowth) },
-        { id: "rev3", label: "Revenue growth per year, 3 years", fmt: "pct", lo: -0.02, hi: 0.20, why: "Compound annual growth over three fiscal years.", get: (c) => v(c.cagr3) },
-        { id: "rev5", label: "Revenue growth per year, 5 years", fmt: "pct", lo: -0.02, hi: 0.20, why: "Compound annual growth over five fiscal years.", get: (c) => v(c.cagr5) },
+        { id: "revQ", label: "Revenue growth, latest quarter", fmt: "pct", lo: -0.05, hi: 0.25, why: "Sales compared with the same quarter a year earlier.",
+          get: (c) => v(c.Q.revenueGrowth), prev: (c) => c.prevQ.revenueGrowth, prevLabel: PQ },
+        { id: "revTtm", label: "Revenue growth, trailing 12 months", fmt: "pct", lo: -0.05, hi: 0.25, why: "The last four quarters against the four before.",
+          get: (c) => v(c.ttm.revenueGrowth), prev: (c) => c.prevQ.ttmRevenueGrowth, prevLabel: PQ },
+        { id: "rev3", label: "Revenue growth per year, 3 years", fmt: "pct", lo: -0.02, hi: 0.20, why: "Compound annual growth over three fiscal years.",
+          get: (c) => v(c.cagr3), prev: (c) => Calc.cagr(yb(c, 4).revenue, yb(c, 1).revenue, 3), prevLabel: PY },
+        { id: "rev5", label: "Revenue growth per year, 5 years", fmt: "pct", lo: -0.02, hi: 0.20, why: "Compound annual growth over five fiscal years.",
+          get: (c) => v(c.cagr5), prev: (c) => Calc.cagr(yb(c, 6).revenue, yb(c, 1).revenue, 5), prevLabel: PY },
         { id: "growthYears", label: "Years with rising revenue (last 5)", fmt: "pct0", lo: 0.4, hi: 1, why: "How consistent growth has been.", get: (c) => v(c.growthYears) },
-        { id: "epsTtm", label: "EPS growth, trailing 12 months", fmt: "pct", lo: -0.10, hi: 0.30, why: "Profit per share, last four quarters against the four before.",
-          get: (c) => (isNum(c.ttm.epsGrowth) ? v(c.ttm.epsGrowth) : isNum(c.ttm.eps) && c.ttm.eps <= 0 ? { value: null, score: 0, note: "Trailing EPS is negative" } : v(null, "Earnings were negative a year ago, so a growth rate is not meaningful")) },
+        { id: "gpTtm", label: "Gross profit growth, trailing 12 months", fmt: "pct", lo: -0.05, hi: 0.25, why: "Whether profit after the direct cost of the product is growing.",
+          get: (c) => profitGrowth(c.ttm.grossProfitGrowth, c.ttm.grossProfit, null, "Trailing gross profit"), prev: (c) => c.prevQ.ttmGrossProfitGrowth, prevLabel: PQ },
         { id: "opTtm", label: "Operating income growth, trailing 12 months", fmt: "pct", lo: -0.10, hi: 0.30, why: "Profit from the core business.",
-          get: (c) => (isNum(c.ttm.opIncomeGrowth) ? v(c.ttm.opIncomeGrowth) : isNum(c.ttm.opIncome) && c.ttm.opIncome <= 0 ? { value: null, score: 0, note: "Trailing operating income is negative" } : v(null)) },
-        { id: "grossMargin", label: "Gross margin", fmt: "pct", lo: 0.15, hi: 0.60, why: "Share of sales left after the direct cost of the product.", get: (c) => v(c.L.grossMargin) },
-        { id: "opMargin", label: "Operating margin", fmt: "pct", lo: 0, hi: 0.30, why: "Share of sales left as operating profit.", get: (c) => v(isNum(c.ttm.opMargin) ? c.ttm.opMargin : c.L.opMargin) },
-        { id: "opMarginChange", label: "Operating margin change, year over year", fmt: "pts", lo: -0.03, hi: 0.03, why: "Whether profitability is widening or narrowing.", get: (c) => v(c.ttm.opMarginChange) },
-        { id: "fcfMargin", label: "Free cash flow margin", fmt: "pct", lo: 0, hi: 0.25, why: "Spare cash produced per dollar of sales.", get: (c) => v(c.ttm.revenue > 0 && isNum(c.ttm.freeCashFlow) ? c.ttm.freeCashFlow / c.ttm.revenue : c.L.fcfMargin) },
-        { id: "ocfGrowth", label: "Operating cash flow growth, latest year", fmt: "pct", lo: -0.10, hi: 0.25, why: "Whether the cash coming in from operations is growing.", get: (c) => v(c.ocfGrowth) },
+          get: (c) => profitGrowth(c.ttm.opIncomeGrowth, c.ttm.opIncome, null, "Trailing operating income"), prev: (c) => c.prevQ.ttmOpIncomeGrowth, prevLabel: PQ },
+        { id: "niQ", label: "Net income growth, latest quarter", fmt: "pct", lo: -0.10, hi: 0.30, why: "Bottom-line profit against the same quarter a year earlier.",
+          get: (c) => profitGrowth(c.Q.netIncomeGrowth, c.Q.netIncome, (c.quarters[c.quarters.length - 5] || {}).netIncome, "Net income"), prev: (c) => c.prevQ.netIncomeGrowth, prevLabel: PQ },
+        { id: "epsTtm", label: "EPS growth, trailing 12 months", fmt: "pct", lo: -0.10, hi: 0.30, why: "Profit per share, last four quarters against the four before.",
+          get: (c) => profitGrowth(c.ttm.epsGrowth, c.ttm.eps, null, "Trailing EPS"), prev: (c) => c.prevQ.ttmEpsGrowth, prevLabel: PQ },
+        { id: "grossMargin", label: "Gross margin", fmt: "pct", lo: 0.15, hi: 0.60, why: "Share of sales left after the direct cost of the product.",
+          get: (c) => v(c.L.grossMargin), prev: (c) => yb(c, 1).grossMargin, prevLabel: PY },
+        { id: "opMargin", label: "Operating margin, trailing 12 months", fmt: "pct", lo: 0, hi: 0.30, why: "Share of sales left as operating profit.",
+          get: (c) => v(isNum(c.ttm.opMargin) ? c.ttm.opMargin : c.L.opMargin), prev: (c) => c.prevQ.ttmOpMargin, prevLabel: PQ },
+        { id: "netMargin", label: "Net profit margin, trailing 12 months", fmt: "pct", lo: 0, hi: 0.25, why: "Share of sales kept as profit after every cost.",
+          get: (c) => v(isNum(c.ttm.netMargin) ? c.ttm.netMargin : c.L.netMargin), prev: (c) => c.prevQ.ttmNetMargin, prevLabel: PQ },
+        { id: "opMarginChange", label: "Operating margin change, year over year", fmt: "pts", lo: -0.03, hi: 0.03, why: "Whether profitability is widening or narrowing.",
+          get: (c) => v(c.ttm.opMarginChange), prev: (c) => c.prevQ.ttmOpMarginChange, prevLabel: PQ },
+        { id: "fcfMargin", label: "Free cash flow margin", fmt: "pct", lo: 0, hi: 0.25, why: "Spare cash produced per dollar of sales.",
+          get: (c) => v(c.ttm.revenue > 0 && isNum(c.ttm.freeCashFlow) ? c.ttm.freeCashFlow / c.ttm.revenue : c.L.fcfMargin), prev: (c) => yb(c, 1).fcfMargin, prevLabel: PY },
+        { id: "ocfGrowth", label: "Operating cash flow growth, latest year", fmt: "pct", lo: -0.10, hi: 0.25, why: "Whether the cash coming in from operations is growing.",
+          get: (c) => profitGrowth(c.ocfGrowth, c.L.operatingCashFlow, yb(c, 1).operatingCashFlow, "Operating cash flow"),
+          prev: (c) => growth(yb(c, 2).operatingCashFlow, yb(c, 1).operatingCashFlow), prevLabel: PY },
+        { id: "fcfGrowth", label: "Free cash flow growth, latest year", fmt: "pct", lo: -0.15, hi: 0.25, why: "Whether spare cash is growing after investment.",
+          get: (c) => profitGrowth(c.fcfGrowth, c.L.freeCashFlow, yb(c, 1).freeCashFlow, "Free cash flow"),
+          prev: (c) => growth(yb(c, 2).freeCashFlow, yb(c, 1).freeCashFlow), prevLabel: PY },
       ],
     },
     {
@@ -90,12 +117,12 @@ const Ratings = (() => {
       id: "earnings", label: "Earnings momentum", short: "Earnings", weight: 15, source: "SEC filings (quarterly)",
       about: "Whether profit growth is speeding up or slowing down. A company can still be growing while its growth rate falls.",
       factors: [
-        { id: "epsQ", label: "EPS growth, latest quarter", fmt: "pct", lo: -0.10, hi: 0.30, why: "Profit per share against the same quarter a year earlier.",
+        { id: "epsQ", label: "EPS growth, latest quarter", fmt: "pct", lo: -0.10, hi: 0.30, prev: (c) => c.prevQ.epsGrowth, prevLabel: PQ, why: "Profit per share against the same quarter a year earlier.",
           get: (c) => (isNum(c.Q.epsGrowth) ? v(c.Q.epsGrowth) : isNum(c.Q.eps) && c.Q.eps <= 0 ? { value: null, score: 0, note: "The latest quarter was a loss" } : v(null, "The year-ago quarter was a loss, so a growth rate is not meaningful")) },
-        { id: "epsAccel", label: "EPS growth acceleration", fmt: "pts", lo: -0.15, hi: 0.15, why: "This quarter's EPS growth rate minus last quarter's.", get: (c) => v(c.momentum.epsAccel) },
-        { id: "revAccel", label: "Revenue growth acceleration", fmt: "pts", lo: -0.05, hi: 0.05, why: "This quarter's revenue growth rate minus last quarter's.", get: (c) => v(c.momentum.revenueAccel) },
-        { id: "opAccel", label: "Operating income growth acceleration", fmt: "pts", lo: -0.15, hi: 0.15, why: "This quarter's operating income growth rate minus last quarter's.", get: (c) => v(c.momentum.opIncomeAccel) },
-        { id: "ttmEpsAccel", label: "Trailing-12-month EPS growth acceleration", fmt: "pts", lo: -0.10, hi: 0.10, why: "A smoother version that is less affected by one unusual quarter.", get: (c) => v(c.momentum.ttmEpsAccel) },
+        { id: "epsAccel", label: "EPS growth acceleration", fmt: "pts", lo: -0.15, hi: 0.15, prev: (c) => (isNum(c.prevQ.epsGrowth) && isNum(c.prevQ2.epsGrowth) ? c.prevQ.epsGrowth - c.prevQ2.epsGrowth : null), prevLabel: PQ, why: "This quarter's EPS growth rate minus last quarter's.", get: (c) => v(c.momentum.epsAccel) },
+        { id: "revAccel", label: "Revenue growth acceleration", fmt: "pts", lo: -0.05, hi: 0.05, prev: (c) => (isNum(c.prevQ.revenueGrowth) && isNum(c.prevQ2.revenueGrowth) ? c.prevQ.revenueGrowth - c.prevQ2.revenueGrowth : null), prevLabel: PQ, why: "This quarter's revenue growth rate minus last quarter's.", get: (c) => v(c.momentum.revenueAccel) },
+        { id: "opAccel", label: "Operating income growth acceleration", fmt: "pts", lo: -0.15, hi: 0.15, prev: (c) => (isNum(c.prevQ.opIncomeGrowth) && isNum(c.prevQ2.opIncomeGrowth) ? c.prevQ.opIncomeGrowth - c.prevQ2.opIncomeGrowth : null), prevLabel: PQ, why: "This quarter's operating income growth rate minus last quarter's.", get: (c) => v(c.momentum.opIncomeAccel) },
+        { id: "ttmEpsAccel", label: "Trailing-12-month EPS growth acceleration", fmt: "pts", lo: -0.10, hi: 0.10, prev: (c) => (isNum(c.prevQ.ttmEpsGrowth) && isNum(c.prevQ2.ttmEpsGrowth) ? c.prevQ.ttmEpsGrowth - c.prevQ2.ttmEpsGrowth : null), prevLabel: PQ, why: "A smoother version that is less affected by one unusual quarter.", get: (c) => v(c.momentum.ttmEpsAccel) },
         { id: "improving", label: "Quarters with a wider margin than a year earlier (last 4)", fmt: "pct0", lo: 0, hi: 1, why: "How many recent quarters showed improving profitability.", get: (c) => v(c.momentum.improvingQuarters) },
         { id: "epsUp", label: "Quarters with higher EPS than a year earlier (last 8)", fmt: "pct0", lo: 0.25, hi: 1, why: "Consistency of earnings improvement. Works for loss-making companies too.", get: (c) => v(c.momentum.epsUpShare) },
       ],
@@ -104,21 +131,24 @@ const Ratings = (() => {
       id: "quality", label: "Financial quality", short: "Quality", weight: 15, source: "SEC filings",
       about: "Returns on capital, balance-sheet strength and whether reported profit is backed by cash.",
       factors: [
-        { id: "roic", label: "Return on invested capital", fmt: "pct", lo: 0.05, hi: 0.25, why: "Profit earned on all the capital in the business.", get: (c) => v(c.L.roic) },
-        { id: "roa", label: "Return on assets", fmt: "pct", lo: 0, hi: 0.15, why: "Profit earned on everything the company controls.", get: (c) => v(c.L.roa) },
-        { id: "netDebtToEbitda", label: "Net debt ÷ EBITDA", fmt: "ratio", lo: 4, hi: 0, why: "Years of operating profit needed to clear net debt.",
+        { id: "roic", label: "Return on invested capital", fmt: "pct", lo: 0.05, hi: 0.25, prev: (c) => yb(c, 1).roic, prevLabel: PY, why: "Profit earned on all the capital in the business.", get: (c) => v(c.L.roic) },
+        { id: "roa", label: "Return on assets", fmt: "pct", lo: 0, hi: 0.15, prev: (c) => yb(c, 1).roa, prevLabel: PY, why: "Profit earned on everything the company controls.", get: (c) => v(c.L.roa) },
+        { id: "netDebtToEbitda", label: "Net debt ÷ EBITDA", fmt: "ratio", lo: 4, hi: 0, prev: (c) => yb(c, 1).netDebtToEbitda, prevLabel: PY, why: "Years of operating profit needed to clear net debt.",
           get: (c) => (!isNum(c.L.netDebt) ? v(null) : c.L.netDebt <= 0 ? { value: null, score: 100, note: "Holds more cash than debt" }
             : !isNum(c.L.ebitda) ? v(null) : c.L.ebitda <= 0 ? { value: null, score: 0, note: "EBITDA is negative while the company has net debt" } : v(c.L.netDebtToEbitda)) },
-        { id: "interestCoverage", label: "Interest coverage", fmt: "ratio", lo: 1.5, hi: 12, why: "How many times operating profit covers interest.",
+        { id: "interestCoverage", label: "Interest coverage", fmt: "ratio", lo: 1.5, hi: 12, prev: (c) => yb(c, 1).interestCoverage, prevLabel: PY, why: "How many times operating profit covers interest.",
           get: (c) => (c.L.debt === 0 || c.L.interestExpense === 0 ? { value: null, score: 100, note: "No debt or no interest expense" }
             : !isNum(c.L.interestExpense) || !isNum(c.L.ebit) ? v(null) : c.L.ebit <= 0 ? { value: c.L.interestCoverage, score: 0, note: "Operating profit is negative" } : v(c.L.interestCoverage)) },
-        { id: "currentRatio", label: "Current ratio", fmt: "ratio", lo: 0.5, hi: 2, why: "Short-term assets against bills due within a year.", get: (c) => v(c.L.currentRatio) },
-        { id: "debtToEquity", label: "Debt-to-equity", fmt: "ratio", lo: 2, hi: 0, why: "Reliance on borrowed money.",
+        { id: "currentRatio", label: "Current ratio", fmt: "ratio", lo: 0.5, hi: 2, prev: (c) => yb(c, 1).currentRatio, prevLabel: PY, why: "Short-term assets against bills due within a year.", get: (c) => v(c.L.currentRatio) },
+        { id: "debtToEquity", label: "Debt-to-equity", fmt: "ratio", lo: 2, hi: 0, prev: (c) => yb(c, 1).debtToEquity, prevLabel: PY, why: "Reliance on borrowed money.",
           get: (c) => (c.L.debt === 0 ? v(0) : isNum(c.L.equity) && c.L.equity <= 0 ? v(null, "Shareholder equity is negative, so debt-to-equity is not meaningful") : v(c.L.debtToEquity)) },
         { id: "fcfConsistency", label: "Years with positive free cash flow (last 5)", fmt: "pct0", lo: 0.4, hi: 1, why: "Dependability of cash generation.", get: (c) => v(c.fcfYears >= 3 ? c.fcfPositiveShare : null) },
         { id: "cashConversion", label: "Operating cash flow ÷ net income", fmt: "ratio", lo: 0.6, hi: 1.3, why: "Whether reported profit arrives as cash.", get: (c) => v(c.cashConversion, c.L.netIncome <= 0 ? "Net income is negative" : null) },
         { id: "accruals", label: "Accruals ÷ assets", fmt: "pct", lo: 0.10, hi: -0.05, why: "Profit not yet received in cash, relative to assets. Lower is better.", get: (c) => v(c.accruals) },
         { id: "dilution", label: "Share count change per year (3 years)", fmt: "pct", lo: 0.03, hi: -0.03, why: "Rising share counts dilute each owner's stake. Buybacks do the opposite.", get: (c) => v(c.dilution) },
+        { id: "piotroski", label: "Piotroski F-Score (share of 9 tests passed)", fmt: "pct0", lo: 0.33, hi: 0.89,
+          why: "Nine yes/no tests of profitability, balance sheet and efficiency. 8 or 9 of 9 is strong, 3 or fewer weak. Full list on the Financials tab.",
+          get: (c) => (c.piotroski && isNum(c.piotroski.score) ? v(c.piotroski.share) : v(null, c.piotroski ? `Only ${c.piotroski.available} of the 9 tests can be calculated` : "Needs three fiscal years")) },
         { id: "marginStability", label: "Operating margin variability (5 years)", fmt: "pts", lo: 0.08, hi: 0.01, why: "How much the margin swings from year to year. Lower is steadier.", get: (c) => v(c.marginVolatility) },
       ],
     },
@@ -159,7 +189,7 @@ const Ratings = (() => {
   }
 
   // Step 2: score one company against the universe.
-  function rateOne(company, raw, universe, weights) {
+  function rateOne(company, raw, universe, weights, market) {
     const w = normalizeWeights(weights);
     const peers = universe.filter((c) => c.group === company.group && c.group !== "Other");
     const categories = MODEL.map((cat) => {
@@ -177,6 +207,8 @@ const Ratings = (() => {
         if (isNum(score)) { covered += fw; sum += score * fw; }
         return {
           id: f.id, label: f.label, fmt: f.fmt, why: f.why, lo: f.lo, hi: f.hi, higher, weight: fw,
+          previous: f.prev ? (isNum(f.prev(company, market ? market[company.ticker] || null : null)) ? f.prev(company, market ? market[company.ticker] || null : null) : null) : null,
+          prevLabel: f.prevLabel || null,
           value: r.value, note: r.note || null, absolute, rank, score, grade: grade(score),
           peerMedian: peers.length >= 4 ? median(peers.map((p) => raw[p.ticker][f.id].value)) : null,
           universeMedian: median(all), sample: all.filter(isNum).length,
@@ -233,7 +265,7 @@ const Ratings = (() => {
   function rateAll(companies, market = null, weights = PRESETS.Balanced) {
     const raw = collect(companies, market);
     const out = {};
-    for (const c of companies) out[c.ticker] = rateOne(c, raw, companies, weights);
+    for (const c of companies) out[c.ticker] = rateOne(c, raw, companies, weights, market);
     return out;
   }
 

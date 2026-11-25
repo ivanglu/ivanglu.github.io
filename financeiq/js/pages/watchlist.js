@@ -27,7 +27,7 @@
         <td><button type="button" class="fq-btn" data-remove="${t}">Remove</button></td></tr>`;
     }).join("");
     $("#app").innerHTML = `<section class="fq-section" style="padding-top:8px">
-      <div class="fq-filters"><button type="button" class="fq-btn fq-btn--primary" id="go" ${picked.length === 2 ? "" : "disabled"}>Compare ${picked.length === 2 ? picked.join(" and ") : "(tick two)"}</button></div>
+      <div class="fq-filters"><button type="button" class="fq-btn fq-btn--primary" id="go" ${picked.length >= 2 ? "" : "disabled"}>Compare ${picked.length >= 2 ? picked.join(", ") : "(tick 2 to 4)"}</button></div>
       <div class="fq-card" style="padding:6px 10px"><div class="fq-tablewrap"><table class="fq-table fq-screen">
         <thead><tr><th class="fq-l">Company</th><th>Overall</th>${cats.map((m) => `<th>${m.short}</th>`).join("")}<th>Since last snapshot</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div></div>
@@ -41,12 +41,12 @@
   document.addEventListener("click", (e) => {
     const r = e.target.closest("[data-remove]");
     if (r) { Core.toggleWatch(r.dataset.remove); picked = picked.filter((t) => t !== r.dataset.remove); draw(); }
-    else if (e.target.closest("#go")) location.href = `compare.html#${picked[0]}-${picked[1]}`;
+    else if (e.target.closest("#go")) location.href = `compare.html#${picked.join("-")}`;
   });
   document.addEventListener("change", (e) => {
     const t = e.target;
     if (!t.dataset.pick) return;
-    picked = t.checked ? [...picked, t.dataset.pick].slice(-2) : picked.filter((x) => x !== t.dataset.pick);
+    picked = t.checked ? [...picked, t.dataset.pick].slice(-Core.MAX_COMPARE) : picked.filter((x) => x !== t.dataset.pick);
     draw();
   });
 })();

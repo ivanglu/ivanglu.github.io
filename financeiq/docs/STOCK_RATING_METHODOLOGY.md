@@ -1,6 +1,6 @@
 # Stock rating methodology
 
-Methodology version 1.0. The code is `js/ratings.js`; if this file and the code disagree, the code is what
+Methodology version 1.1 (1.0 had 12 Fundamental and 11 Quality measures; 1.1 adds four Fundamental measures and the Piotroski F-Score). The code is `js/ratings.js`; if this file and the code disagree, the code is what
 the site does. The live tables on `methodology.html#rating` are generated from the code.
 
 ## Purpose
@@ -53,7 +53,7 @@ Outliers: the scale is capped, and ranks ignore how extreme a value is. No value
 
 ## Measures
 
-### Fundamental performance (12 measures, equal weight)
+### Fundamental performance (16 measures, equal weight)
 
 | Measure | 0 at | 100 at |
 |---|---:|---:|
@@ -69,6 +69,10 @@ Outliers: the scale is capped, and ranks ignore how extreme a value is. No value
 | Operating margin change, year over year | −3 pts | +3 pts |
 | Free cash flow margin | 0% | 25% |
 | Operating cash flow growth, latest year | −10% | 25% |
+| Net income growth, latest quarter (1.1) | −10% | 30% |
+| Gross profit growth, trailing 12 months (1.1) | −5% | 25% |
+| Net profit margin, trailing 12 months (1.1) | 0% | 25% |
+| Free cash flow growth, latest year (1.1) | −15% | 25% |
 
 ### Earnings momentum (7 measures, equal weight)
 
@@ -88,7 +92,7 @@ EPS levels, so it works for loss-making companies where a growth percentage woul
 Not included: earnings surprises and analyst revisions. They need licensed, dated consensus estimates. Their
 absence does not lower any score.
 
-### Financial quality (11 measures, equal weight)
+### Financial quality (12 measures, equal weight)
 
 | Measure | 0 at | 100 at |
 |---|---:|---:|
@@ -103,10 +107,18 @@ absence does not lower any score.
 | Accruals ÷ assets, (net income − operating cash flow) ÷ average assets | +10% | −5% |
 | Share count change per year, 3 years | +3% | −3% |
 | Operating margin variability, standard deviation over 5 years | 8 pts | 1 pt |
+| Piotroski F-Score, share of the 9 tests passed (1.1) | 3 of 9 | 8 of 9 |
+
+**Piotroski F-Score.** Nine yes/no tests comparing the latest fiscal year with the one before: positive return
+on assets; positive operating cash flow; return on assets up; operating cash flow above net income; debt ÷ assets
+down; current ratio up; no rise in diluted shares (0.5% allowed); gross margin up; asset turnover up. Return on
+assets and asset turnover use beginning-of-year assets, as in the original paper. Two simplifications: total debt
+in place of long-term debt, and the diluted share count in place of shares issued. No score is given if fewer
+than eight tests can be calculated. It overlaps with some other quality measures (accruals, leverage); it is
+kept because it is a widely taught, transparent summary.
 
 Return on equity is left out of this category: it is distorted by buybacks for many of these companies, and
-ROIC measures the same idea without that problem. Piotroski and Altman scores were considered and not added:
-the Altman model was built for manufacturers and its original form needs market value.
+ROIC measures the same idea without that problem. The Altman Z-Score was considered and not added: the model was built for manufacturers and its original form needs market value.
 
 ### Quantitative momentum and Valuation
 
@@ -114,6 +126,12 @@ See [QUANTITATIVE_METHODOLOGY.md](QUANTITATIVE_METHODOLOGY.md). Valuation, when 
 multiples: earnings yield 25%, free cash flow yield 25%, EBITDA ÷ enterprise value 20%, price-to-sales 15%,
 price-to-book 15%. DCF results are shown beside the grade but are not part of it, because they depend on
 assumptions the user chooses.
+
+## Previous values
+
+Each measure shows its previous comparable value where one exists: the previous quarter for quarterly and
+trailing measures, the previous fiscal year for annual ones. It is shown for context only and does not affect
+the score.
 
 ## Awkward cases
 

@@ -62,7 +62,7 @@
           <button type="button" class="fq-btn" id="reset">Clear</button>
           <button type="button" class="fq-btn" id="save">Save this screen</button>
           <button type="button" class="fq-btn" id="csv">Export CSV</button>
-          <button type="button" class="fq-btn fq-btn--primary" id="go" ${st.picked.length === 2 ? "" : "disabled"}>Compare ${st.picked.length === 2 ? st.picked.join(" and ") : "(tick two)"}</button>
+          <button type="button" class="fq-btn fq-btn--primary" id="go" ${st.picked.length >= 2 ? "" : "disabled"}>Compare ${st.picked.length >= 2 ? st.picked.join(", ") : "(tick 2 to 4)"}</button>
         </div>
         <p class="fq-small fq-muted">${rows.length} of ${all.length} companies. Click a column heading to sort. ☆ adds to your watchlist.${market ? "" : " Price, valuation and momentum columns are hidden because market data is not connected."}</p>
         <div class="fq-card" style="padding:6px 10px">${table(rows, market)}</div>
@@ -84,7 +84,7 @@
     else if (star) Core.toggleWatch(star.dataset.star);
     else if (t.closest("#reset")) { st.preset = null; st.filters = { text: "", group: "", minGrade: {}, maxGrade: {}, min: {}, max: {} }; st.picked = []; }
     else if (t.closest("#save")) { Core.store.set("screen", { sort: st.sort, desc: st.desc, filters: { group: st.filters.group, minGrade: st.filters.minGrade } }); t.closest("#save").textContent = "Saved in this browser"; return; }
-    else if (t.closest("#go")) { location.href = `compare.html#${st.picked[0]}-${st.picked[1]}`; return; }
+    else if (t.closest("#go")) { location.href = `compare.html#${st.picked.join("-")}`; return; }
     else if (t.closest("#csv")) {
       const cols = COLUMNS.filter((c) => !c.market).map((c) => ({ key: c.key, label: c.label }));
       const blob = new Blob([Screen.toCsv(st.rows, [{ key: "ticker", label: "Ticker" }, ...cols])], { type: "text/csv" });
@@ -94,7 +94,7 @@
   });
   document.addEventListener("change", (e) => {
     const t = e.target;
-    if (t.dataset.pick) { st.picked = t.checked ? [...st.picked, t.dataset.pick].slice(-2) : st.picked.filter((x) => x !== t.dataset.pick); }
+    if (t.dataset.pick) { st.picked = t.checked ? [...st.picked, t.dataset.pick].slice(-Core.MAX_COMPARE) : st.picked.filter((x) => x !== t.dataset.pick); }
     else if (t.dataset.min) { st.filters.minGrade[t.dataset.min] = t.value; st.preset = null; }
     else if (t.id === "f-group") st.filters.group = t.value;
     else return;

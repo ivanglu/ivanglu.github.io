@@ -5,7 +5,7 @@ A financial research tool for comparing public companies, built on the annual re
 Live: https://ivanglushchenko.com/financeiq/
 
 - **Stock rating:** five graded categories with every measure shown. Three are live; two wait for licensed price data.
-- **Company pages, screener, watchlist and search** across 38 companies.
+- **Company pages, screener, watchlist and search** across 38 companies, and side-by-side comparison of up to four.
 - **Financial Health Score:** 0–100, from 19 measures in five categories, with adjustable weights.
 - **DCF valuation simulator:** three scenarios and a sensitivity table.
 - **Historical trends** and **industry benchmarks** for 38 companies.

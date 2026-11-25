@@ -454,6 +454,49 @@ const Tests = (() => {
   test("with no earlier snapshot there is no change to report (none is invented)", () => eq(Ratings.changes(null, { overall: 62, categories: {} }), null));
   test("a category that was unavailable before has no numeric change", () => eq(Ratings.changes({ overall: 50, categories: { quant: null } }, { overall: 55, categories: { quant: 70 } }).categories[0].delta, null));
 
+  section("Piotroski F-Score");
+  test("the sample company passes 6 of the 9 tests", () => {
+    // passes: positive ROA, positive cash flow, ROA up (152/2000 vs 130/2000), cash flow > profit, no new shares, turnover up
+    // fails: leverage unchanged, current ratio unchanged, gross margin down (40.0% vs 44.4%)
+    const f = Calc.piotroski(sample()); eq(f.score, 6); eq(f.available, 9);
+    eq(f.tests.filter((t) => t.pass === false).map((t) => t.label).join(" | "), "Debt fell relative to assets | Current ratio improved | Gross margin improved");
+  });
+  test("a net loss fails the first test, and cash flow above a loss passes the cash-backing test", () => {
+    const f = Calc.piotroski(sample({ netIncome: -50 })); eq(f.tests[0].pass, false); eq(f.tests[3].pass, true);
+  });
+  test("a share count rise above 0.5% fails the no-new-shares test; 0.4% does not", () => {
+    eq(Calc.piotroski(sample({ dilutedShares: 101 })).tests[6].pass, false); eq(Calc.piotroski(sample({ dilutedShares: 100.4 })).tests[6].pass, true);
+  });
+  test("with two tests missing there is no score, rather than a score out of fewer tests", () => {
+    const f = Calc.piotroski(sample({ grossProfit: null, currentAssets: null })); eq(f.score, null); eq(f.available, 7);
+  });
+  test("with one test missing the score is out of the 8 that could be calculated", () => {
+    const f = Calc.piotroski(sample({ grossProfit: null })); eq(f.available, 8); near(f.share, f.score / 8);
+  });
+  test("fewer than three fiscal years gives no score", () => { const c = sample(); c.years = c.years.slice(-2); Calc.derive(c); eq(c.piotroski, null); });
+
+  section("Rating measures added in methodology 1.1");
+  test("methodology version is 1.1", () => eq(Ratings.VERSION, "1.1"));
+  test("Fundamentals has 16 measures, Earnings 7, Quality 12", () => eq(Ratings.MODEL.map((c) => c.factors.length).join(","), "16,12,5,7,12"));
+  test("TTM gross profit growth and net margin are calculated", () => { near(q.ttm.grossProfitGrowth, 545 / 450 - 1); near(q.ttm.netMargin, 66 / 545); });
+  test("net income growth with a loss a year earlier is left out, with a reason", () => {
+    const c = sampleQ(); c.quarters[8].netIncome = -5; Calc.deriveQuarters(c);
+    const f = Ratings.rateAll([c]).TEST.categories[0].factors.find((x) => x.id === "niQ");
+    eq(f.score, null); ok(/negative a year earlier/.test(f.note));
+  });
+  test("a loss this quarter scores 0 on net income growth", () => {
+    const f = Ratings.rateAll([sampleQ({ netIncome: -5 })]).TEST.categories[0].factors.find((x) => x.id === "niQ"); eq(f.score, 0);
+  });
+  test("each measure shows the previous comparable value where one exists", () => {
+    const cat = rated.T5.categories[0];
+    near(cat.factors.find((x) => x.id === "revQ").previous, 140 / 110 - 1); eq(cat.factors.find((x) => x.id === "revQ").prevLabel, "previous quarter");
+    near(rated.T5.categories[4].factors.find((x) => x.id === "roic").previous, universe[5].years[2].roic);
+    eq(cat.factors.find((x) => x.id === "growthYears").previous, null);
+  });
+  test("previous EPS acceleration = last quarter's growth minus the quarter before's", () => {
+    near(rated.T5.categories[3].factors.find((x) => x.id === "epsAccel").previous, (1.65 / 1.1 - 1) - (1.43 / 1.1 - 1));
+  });
+
   section("Screener");
   const rows = universe.map((c) => Screen.row(c, rated[c.ticker], null));
   test("a row carries the grades and key figures, with market columns empty when there is no price data", () => { eq(rows[0].ticker, "T0"); ok(rows[0].fundamental > 0); eq(rows[0].price, null); eq(rows[0].quant, null); });
