@@ -1,5 +1,29 @@
 # Changelog
 
+## 3.2.0 (25 November 2026, on branch `own-prices`, not yet deployed)
+
+### Added
+- **Connect your own price data** (`prices.html`): paste a free key from Twelve Data or Massive (formerly
+  Polygon.io), or import CSV files. The browser downloads about two years of daily, split-adjusted prices for all
+  38 companies and SPY, keeps them in this browser only, and switches on the Quantitative and Valuation grades,
+  complete ratings, the market columns and screens in the screener, and the valuation multiples.
+- **Price charts** on the company Quantitative tab: close with 50- and 200-day averages, and performance against
+  the S&P 500, with 1M to 2Y period buttons.
+- `js/market.js` with 14 new unit tests (parsing both providers and CSV, calendar alignment, gap and split checks,
+  dropping today's unfinished bar).
+- "Connect prices" / "Prices on" indicator in the top bar.
+
+### Changed
+- **Missing grades are de-emphasised:** without prices, the two empty grade cards and empty measure lists are
+  replaced by one line with a "Connect free price data" button. Rating labels say "3 of 5 categories" instead of "partial".
+- Long daily charts no longer draw a dot on every day, and date labels are spaced by their width.
+- The security policy now allows requests to `api.twelvedata.com` and `api.massive.com`, the two providers a
+  visitor can choose. Nothing else.
+
+### Not done, on purpose
+- Prices are not loaded from Yahoo Finance or any other source by default. Yahoo's terms forbid automated
+  collection, and no free provider found allows a public site to show its prices to everyone.
+
 ## 3.1.0 (25 November 2026, on branch `site-polish`, not yet deployed)
 
 ### Added

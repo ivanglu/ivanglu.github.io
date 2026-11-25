@@ -104,6 +104,12 @@ python3 financeiq/tools/snapshot_ratings.py
    entry and the site will say that no summary exists.
 4. Regenerate the sample PDF: open `report.html#AAPL-MSFT`, press "Save as PDF", and replace the file in `reports/`.
 
+## Market data for one person: your own key
+
+Any visitor, including Ivan, can open `prices.html`, paste a free key from Twelve Data or Massive, and get the
+Quantitative and Valuation grades in their own browser. Nothing is published. This is the normal way to use
+the price-based features.
+
 ## Adding market data
 
 The Quantitative and Valuation grades need daily prices. Read

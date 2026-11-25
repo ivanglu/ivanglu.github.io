@@ -51,7 +51,7 @@
     $("#app").innerHTML = `
       <section class="fq-section" style="padding-top:8px">
         <div class="fq-chips" role="group" aria-label="Ready-made screens">
-          ${Screen.PRESETS.map((p) => `<button type="button" class="fq-chip" data-preset="${p.id}" aria-pressed="${p.id === st.preset}" ${p.market && !market ? `disabled title="Needs market data, which is not connected"` : ""}>${p.name}</button>`).join("")}
+          ${Screen.PRESETS.map((p) => `<button type="button" class="fq-chip" data-preset="${p.id}" aria-pressed="${p.id === st.preset}" ${p.market && !market ? `disabled title="Needs price data: connect it on the Prices page"` : ""}>${p.name}</button>`).join("")}
         </div>
         ${preset ? `<p class="fq-note" style="margin:0 0 14px"><strong>${esc(preset.name)}.</strong> ${esc(preset.why)}</p>` : ""}
         <div class="fq-filters">
@@ -64,7 +64,7 @@
           <button type="button" class="fq-btn" id="csv">Export CSV</button>
           <button type="button" class="fq-btn fq-btn--primary" id="go" ${st.picked.length >= 2 ? "" : "disabled"}>Compare ${st.picked.length >= 2 ? st.picked.join(", ") : "(tick 2 to 4)"}</button>
         </div>
-        <p class="fq-small fq-muted">${rows.length} of ${all.length} companies. Click a column heading to sort. ☆ adds to your watchlist.${market ? "" : " Price, valuation and momentum columns are hidden because market data is not connected."}</p>
+        <p class="fq-small fq-muted">${rows.length} of ${all.length} companies. Click a column heading to sort. ☆ adds to your watchlist.${market ? "" : ` Price, valuation and momentum columns appear when you <a href="prices.html">connect price data</a>.`}</p>
         <div class="fq-card" style="padding:6px 10px">${table(rows, market)}</div>
         <p class="fq-small fq-muted" style="margin-top:10px">* Partial rating. Grades are relative to the ${all.length} tracked companies and to fixed scales, as described in the <a href="methodology.html#rating">methodology</a>. The CSV contains figures calculated from SEC filings only.</p>
       </section>`;

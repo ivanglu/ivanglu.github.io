@@ -49,10 +49,12 @@ const Chart = (() => {
       svg += `<line class="${t === 0 && lo < 0 ? "fq-zero" : "fq-gridline"}" x1="${m.left}" x2="${W - m.right}" y1="${y(t)}" y2="${y(t)}"/>`;
       svg += `<text x="${m.left - 8}" y="${y(t) + 4}" text-anchor="end">${esc(axisFmt(t))}</text>`;
     }
-    // x labels (skip some when they would collide)
-    const skip = Math.ceil(40 / ((W - m.left - m.right) / Math.max(1, xs.length - 1)));
+    // x labels: skip some so they never collide (wider labels need more room)
+    const xLabel = cfg.xLabel || ((v) => v);
+    const widest = Math.max(...xs.map((v) => String(xLabel(v)).length)) * 7 + 12;
+    const skip = Math.ceil(widest / ((W - m.left - m.right) / Math.max(1, xs.length - 1)));
     xs.forEach((v, i) => {
-      if ((xs.length - 1 - i) % skip === 0) svg += `<text x="${x(v)}" y="${H - 6}" text-anchor="middle">${esc(v)}</text>`;
+      if ((xs.length - 1 - i) % skip === 0) svg += `<text x="${x(v)}" y="${H - 6}" text-anchor="middle">${esc(xLabel(v))}</text>`;
     });
 
     // lines + dots; a missing year breaks the line instead of drawing through it
@@ -66,10 +68,11 @@ const Chart = (() => {
         pen = true; last = { x: v, val };
       }
       svg += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
-      for (const v of xs) {
+      // dots only when there are few enough points to tell apart (yearly data, not daily prices)
+      if (xs.length <= 40) for (const v of xs) {
         if (isNum(s.values[v])) svg += `<circle cx="${x(v)}" cy="${y(s.values[v])}" r="3" fill="${s.color}" stroke="var(--surface)" stroke-width="1.5"/>`;
       }
-      if (last) ends.push({ s, px: x(last.x), py: y(last.val) });
+      if (last && s.endLabel !== false) ends.push({ s, px: x(last.x), py: y(last.val) });
     }
     // label each line at its right end; nudge apart if they would overlap
     if (ends.length === 2 && Math.abs(ends[0].py - ends[1].py) < 14) {

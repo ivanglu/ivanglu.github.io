@@ -4,7 +4,10 @@
 (() => {
   const { isNum, fmt, money, pct } = Calc;
   const { term } = Core;
-  let company = null, tab = new URLSearchParams(location.search).get("tab") || "overview";
+  let company = null, tab = new URLSearchParams(location.search).get("tab") || "overview", period = "1Y";
+
+  // Chart periods in trading days. YTD is worked out from the dates.
+  const PERIODS = [["1M", 21], ["3M", 63], ["6M", 126], ["YTD", null], ["1Y", 252], ["2Y", 504]];
 
   const TABS = [["overview", "Overview"], ["financials", "Financials"], ["earnings", "Earnings"], ["quant", "Quantitative"],
     ["valuation", "Valuation"], ["ownership", "Ownership"], ["trends", "Historical trends"], ["research", "Research"]];
@@ -36,7 +39,7 @@
         </div>
         <div class="fq-cohead__rating">
           ${Views.gradeBox(rating.grade, "lg")}
-          <div><span>${rating.complete ? "FinanceIQ rating" : "Partial FinanceIQ rating"}</span><strong>${Views.scoreText(rating.overall)} / 100</strong>
+          <div><span>${rating.complete ? "FinanceIQ rating" : `FinanceIQ rating · ${rating.categories.filter((k) => k.available).length} of 5 categories`}</span><strong>${Views.scoreText(rating.overall)} / 100</strong>
             <span>${change && isNum(change.delta) && Math.abs(change.delta) >= 0.5 ? `${change.delta > 0 ? "▲" : "▼"} ${Math.abs(change.delta).toFixed(1)} since ${esc(change.fromDate)}` : `Rated ${esc(Core.state.data.generated.slice(0, 10))} · ${Math.round(rating.coverage * 100)}% data coverage`}</span></div>
         </div>
       </div>
@@ -157,26 +160,44 @@
     const m = market(), info = Core.state.marketInfo;
     const cat = rating.categories.filter((k) => k.id === "quant");
     if (!m) {
-      return `<section class="fq-section"><h2>Quantitative momentum</h2>${Views.noMarket()}
-        <p class="fq-sub" style="margin-top:16px">When price data is connected, this tab grades four things, each from daily closing prices and volume:</p>
-        <div class="fq-card" style="margin-top:12px"><div class="fq-tablewrap"><table class="fq-table fq-table--dense"><thead><tr><th>Measure</th><th>Weight in category</th><th class="fq-l" style="text-align:left">What it shows</th></tr></thead>
+      return `<section class="fq-section"><h2>Quantitative momentum</h2>${Views.noMarket("The Quantitative grade")}
+        <details class="fq-factors" style="margin-top:16px"><summary>What this grade measures <span>12 measures from daily prices and volume</span></summary><div>
+          <div class="fq-tablewrap"><table class="fq-table fq-table--dense"><thead><tr><th>Measure</th><th>Weight in category</th><th class="fq-l" style="text-align:left">What it shows</th></tr></thead>
           <tbody>${cat[0].factors.map((f) => `<tr><td>${esc(f.label)}</td><td>${(f.weight * 100).toFixed(0)}%</td><td style="text-align:left;white-space:normal">${esc(f.why)}</td></tr>`).join("")}</tbody></table></div>
-          <p class="fq-small fq-muted">Volume measures are proxies for market participation. They cannot show who is buying or selling.</p></div></section>`;
+          <p class="fq-small fq-muted">Volume measures are proxies for market participation. They cannot show who is buying or selling.</p></div></details></section>`;
     }
-    const q = m.q;
+    const q = m.q, n = info.dates.length;
+    const ytdStart = info.dates.findIndex((d) => d.slice(0, 4) === info.asOf.slice(0, 4));
+    const avail = (days) => (days === null ? ytdStart > 0 : n > days);
+    if (!PERIODS.some(([id, days]) => id === period && avail(days))) period = "6M";
+    const stat = (label, value, sub) => `<div><span>${label}</span><strong>${value}</strong><small>${sub || "&nbsp;"}</small></div>`;
+    const rel = (v) => (isNum(v) ? `vs ${esc(info.benchmark)}: ${Ratings.format(v, "pts")}` : "");
     return `<section class="fq-section"><h2>Quantitative momentum</h2>
-      <p class="fq-sub">From daily prices to ${esc(info.asOf)} against ${esc(info.benchmark)}. Price returns, not total returns: dividends are not included.</p>
+      <p class="fq-sub">Daily prices to ${esc(info.asOf)}${info.personal ? `, from ${esc(info.source)} via your key` : ""}. Compared with ${esc(info.benchmark)} (the S&amp;P 500). Price returns: dividends are not included.</p>
       <div class="fq-card"><div class="fq-keystats">
-        <div><span>3-month return</span><strong>${pct(q.return3m)}</strong><small>vs benchmark ${isNum(q.relative3m) ? Ratings.format(q.relative3m, "pts") : "n/a"}</small></div>
-        <div><span>6-month return</span><strong>${pct(q.return6m)}</strong><small>vs benchmark ${isNum(q.relative6m) ? Ratings.format(q.relative6m, "pts") : "n/a"}</small></div>
-        <div><span>12-month return</span><strong>${pct(q.return12m)}</strong><small>&nbsp;</small></div>
-        <div><span>Price vs 200-day average</span><strong>${pct(q.priceVs200)}</strong><small>&nbsp;</small></div>
-        <div><span>From 52-week high</span><strong>${pct(q.fromHigh52)}</strong><small>&nbsp;</small></div>
-        <div><span>Volatility (annualized)</span><strong>${pct(q.volatility)}</strong><small>beta ${isNum(q.beta) ? q.beta.toFixed(2) : "n/a"}</small></div>
+        ${stat("Last close", fmt(q.price, "perShare"), esc(info.asOf))}
+        ${stat("3-month return", pct(q.return3m), rel(q.relative3m))}
+        ${stat("6-month return", pct(q.return6m), rel(q.relative6m))}
+        ${stat("12-month return", pct(q.return12m), rel(q.relative12m))}
+        ${stat("vs 200-day average", pct(q.priceVs200), "")}
+        ${stat("From 52-week high", pct(q.fromHigh52), "")}
+        ${stat("Volatility, yearly", pct(q.volatility), `beta ${isNum(q.beta) ? q.beta.toFixed(2) : "n/a"}`)}
+        ${stat("Largest fall, 12 months", pct(q.maxDrawdown), "")}
       </div></div>
-      ${info.showPrices ? `<article class="fq-card fq-mini" style="margin-top:16px"><h3>Price, last 12 months</h3><div class="fq-chart" data-price="1"></div></article>` : `<p class="fq-note">The price licence allows calculated figures to be shown but not the prices themselves, so there is no price chart.</p>`}
+      ${info.showPrices ? `
+      <div class="fq-toolbar" style="margin:18px 0 10px"><span class="fq-seg" role="group" aria-label="Chart period">${PERIODS.map(([id, days]) =>
+        `<button type="button" data-period="${id}" aria-pressed="${id === period}" ${avail(days) ? "" : "disabled"}>${id}</button>`).join("")}</span></div>
+      <div class="fq-two">
+        <article class="fq-card fq-mini"><h3>Price with 50- and 200-day averages</h3>
+          <div class="fq-legend"><span><i class="fq-swatch" style="background:var(--series-a)"></i>Close</span><span><i class="fq-swatch" style="background:var(--series-c)"></i>50-day average</span><span><i class="fq-swatch" style="background:var(--series-d)"></i>200-day average</span></div>
+          <div class="fq-chart" data-price="price"></div></article>
+        <article class="fq-card fq-mini"><h3>Against the S&amp;P 500 (start = 100)</h3>
+          <div class="fq-legend"><span><i class="fq-swatch" style="background:var(--series-a)"></i>${esc(c.name)}</span><span><i class="fq-swatch" style="background:var(--fg-dim)"></i>${esc(info.benchmark)}</span></div>
+          <div class="fq-chart" data-price="relative"></div></article>
+      </div>` : `<p class="fq-note">The price licence allows calculated figures to be shown but not the prices themselves, so there is no price chart.</p>`}
       </section><section class="fq-section">${Views.factorSections({ categories: cat }, c, "quant")}</section>`;
   }
+
 
   function valuation(c, rating) {
     const m = market(), saved = Core.dcfInputs(c);
@@ -188,7 +209,7 @@
     const r2 = (x) => (isNum(x) ? x.toFixed(1) + "×" : "not meaningful");
     return `
       <section class="fq-section"><h2>Valuation multiples</h2>
-        ${m ? `<p class="fq-sub">At ${fmt(price, "perShare")} on ${esc(Core.state.marketInfo.asOf)}.</p>` : `${Views.noMarket()}
+        ${m ? `<p class="fq-sub">At the ${fmt(price, "perShare")} close on ${esc(Core.state.marketInfo.asOf)}, with the share count and balance sheet from the latest quarterly report (${esc(c.latest.end)}).</p>` : `${Views.noMarket("The Valuation grade")}
           <div class="fq-toolbar" style="margin-top:14px"><label>Share price you want to test ($)
             <input type="number" id="myprice" min="0" step="0.01" value="${price || ""}" inputmode="decimal" style="width:130px"></label>
             <span class="fq-muted fq-small">Typed by you, saved in this browser only. It is not a market quote.</span></div>`}
@@ -238,12 +259,30 @@
   function drawCharts() {
     $$("[data-qchart]").forEach((el) => Views.quarterChart(el, [company], el.dataset.qchart));
     $$("[data-trend]").forEach((el) => Views.chart(el, [company], el.dataset.trend, { years: 10, height: 200 }));
-    const priceEl = $("[data-price]"), m = market(), info = Core.state.marketInfo;
-    if (priceEl && m) {
-      const n = Math.min(252, m.series.close.length), dates = info.dates.slice(-n), close = m.series.close.slice(-n);
-      Chart.line(priceEl, { xs: dates, height: 240, label: "Price", fmt: (v) => fmt(v, "perShare"), axisFmt: Chart.axis.perShare, baseline: Math.min(...close),
-        series: [{ name: company.name, short: company.ticker, color: Core.COLORS[0], values: Object.fromEntries(dates.map((d, i) => [d, close[i]])) }] });
+    const m = market(), info = Core.state.marketInfo;
+    if (m && info.showPrices && $("[data-price]")) {
+      const all = m.series.close, dates = info.dates.slice(-all.length), bench = info.benchSeries.close.slice(-all.length);
+      const days = period === "YTD" ? dates.length - dates.findIndex((d) => d.slice(0, 4) === info.asOf.slice(0, 4)) : PERIODS.find((x) => x[0] === period)[1];
+      const from = Math.max(0, dates.length - days);
+      // moving averages are calculated on the full history, then cut to the period
+      const ma = (k) => all.map((_, i) => (i + 1 >= k ? Quant.sma(all.slice(0, i + 1), k) : null));
+      const ma50 = ma(50), ma200 = ma(200);
+      const xs = dates.slice(from);
+      const pick = (arr) => Object.fromEntries(xs.map((d, i) => [d, arr[from + i]]));
+      const lows = all.slice(from).concat(ma50.slice(from), ma200.slice(from)).filter(isNum);
+      const shortDate = (d) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: days <= 126 ? "numeric" : undefined, year: days > 126 ? "2-digit" : undefined });
+      Chart.line($('[data-price="price"]'), { xs, height: 250, xLabel: shortDate, xTitle: (d) => d, label: `${company.name} price`, fmt: (v) => fmt(v, "perShare"), axisFmt: Chart.axis.perShare,
+        baseline: Math.min(...lows), series: [
+          { name: "Close", short: company.ticker, color: "var(--series-a)", values: pick(all) },
+          { name: "50-day average", color: "var(--series-c)", values: pick(ma50), endLabel: false },
+          { name: "200-day average", color: "var(--series-d)", values: pick(ma200), endLabel: false }] });
+      const idx = (arr) => arr.map((v) => (v / arr[from]) * 100);
+      Chart.line($('[data-price="relative"]'), { xs, height: 250, xLabel: shortDate, xTitle: (d) => d, label: `${company.name} against ${info.benchmark}`, fmt: (v) => v.toFixed(1), axisFmt: Chart.axis.index,
+        baseline: 100, series: [
+          { name: company.name, short: company.ticker, color: "var(--series-a)", values: pick(idx(all)) },
+          { name: info.benchmark, short: info.benchmark, color: "var(--fg-dim)", values: pick(idx(bench)) }] });
     }
+
   }
 
   function render(c) {
@@ -262,6 +301,8 @@
   Core.start({ page: "company", mode: "single", render });
 
   document.addEventListener("click", (e) => {
+    const per = e.target.closest("[data-period]");
+    if (per) { period = per.dataset.period; $$("[data-period]").forEach((b) => b.setAttribute("aria-pressed", b === per)); drawCharts(); return; }
     const t = e.target.closest("[data-tab]"), p = e.target.closest("[data-rpreset]");
     if (t) { tab = t.dataset.tab; history.replaceState(null, "", `company.html?tab=${tab}#${company.ticker}`); render(company); }
     else if (p) { Core.setRatingWeights({ ...Ratings.PRESETS[p.dataset.rpreset] }); render(company); }

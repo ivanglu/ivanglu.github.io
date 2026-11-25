@@ -317,6 +317,7 @@ const Core = (() => {
         <a class="fq-brand" href="index.html"><span class="fq-brand__mark">F</span>FinanceIQ</a>
         <span class="fq-combo fq-search"><input id="fq-search" type="search" placeholder="Search ticker or company" aria-label="Search for a company by ticker or name" data-empty-label="Recently viewed"></span>
         <span class="fq-top__right">
+          <a class="fq-pill ${state.marketInfo ? "fq-pill--on" : ""}" id="fq-prices" href="prices.html" title="Share-price data">${state.marketInfo ? "Prices on" : "Connect prices"}</a>
           <button type="button" class="fq-iconbtn" id="fq-theme" aria-label="Switch between light and dark theme" title="Light / dark">◐</button>
           <a class="fq-home" href="about.html">About</a>
           <a class="fq-home fq-hide-sm" href="../">ivanglushchenko.com</a>
@@ -346,7 +347,8 @@ const Core = (() => {
     const d = state.data, m = state.marketInfo;
     host.innerHTML = `
       <p><strong>Financial data:</strong> ${esc(d.source)}. Last successful update ${esc(d.generated)}. Dollar figures are shown as first reported.
-        <strong>Market data:</strong> ${m ? `${esc(m.source)}, prices to ${esc(m.asOf)}.` : "none. FinanceIQ has no licensed price feed yet, so the Quantitative and Valuation grades are not shown."}
+        <strong>Market data:</strong> ${m ? (m.personal ? `${esc(m.source)} via your own key, prices to ${esc(m.asOf)}, kept in this browser only. <a href="prices.html">Manage</a>.` : `${esc(m.source)}, prices to ${esc(m.asOf)}.`)
+          : `not connected. <a href="prices.html">Connect free price data</a> to see the Quantitative and Valuation grades.`}
         <a href="methodology.html">Methodology</a></p>
       <p><strong>Educational project, not investment advice.</strong> Grades, scores and valuations are built from published rules and stated assumptions.
         They describe the past. They do not predict share prices, and an A is not a recommendation to buy.</p>
@@ -435,7 +437,8 @@ const Core = (() => {
       state.market[c.ticker] = { q: Quant.metrics(s, bench || null), v: Calc.valuation(c, price) || { price }, series: s };
     }
     state.marketInfo = { source: file.source, asOf: file.dates[file.dates.length - 1], dates: file.dates, benchmark: file.benchmark,
-                         benchSeries: bench, showPrices: Boolean(file.license && file.license.displayPrices), attribution: file.license && file.license.attribution };
+                         benchSeries: bench, showPrices: Boolean(file.license && file.license.displayPrices), attribution: file.license && file.license.attribution,
+                         personal: Boolean(file.personal), fetchedAt: file.fetchedAt || null, count: Object.keys(file.series).length - 1 };
     if (!Object.keys(state.market).length) { state.market = null; state.marketInfo = null; }
   }
 
@@ -454,12 +457,20 @@ const Core = (() => {
       state.data = data; state.summaries = summaries;
       data.companies.forEach((c) => { Calc.derive(c); state.byTicker[c.ticker] = c; });
       state.list = data.companies;
-      loadMarket(prices);
+      // Prices published with the site (needs a licence) come first; otherwise the visitor's own
+      // connection from prices.html, which lives only in this browser.
+      loadMarket(prices && prices.series ? prices : typeof Market !== "undefined" ? Market.load() : null);
       // only snapshots made with the current methodology can be compared with each other
       state.history = (history && history.snapshots ? history.snapshots : []).filter((h) => h.version === Ratings.VERSION);
       state.ratings = Ratings.rateAll(state.list, state.market, ratingWeights());
       renderFooter();
       wireSearch();
+      const pill = $("#fq-prices");
+      if (pill) {
+        pill.classList.toggle("fq-pill--on", Boolean(state.marketInfo));
+        pill.textContent = state.marketInfo ? "Prices on" : "Connect prices";
+        if (state.marketInfo) pill.title = `Prices to ${state.marketInfo.asOf} from ${state.marketInfo.source}`;
+      }
 
       const saved = store.get("pair", null);
       const sel = fromHash() || (saved && known(saved[0]) ? saved : DEFAULT_PAIR);

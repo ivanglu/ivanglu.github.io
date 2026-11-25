@@ -443,7 +443,7 @@ const Tests = (() => {
     const heavy = Ratings.rateAll(universe, null, { quality: 100 }).T5;
     near(heavy.overall, heavy.categories.find((c) => c.id === "quality").score); near(heavy.categories[0].score, rated.T5.categories[0].score);
   });
-  test("the explanation names the best and worst category and says the rating is partial", () => ok(/scores highest on/.test(rated.T5.explanation.summary) && /partial rating/.test(rated.T5.explanation.summary)));
+  test("the explanation names the best and worst category and says how many categories the rating covers", () => ok(/scores highest on/.test(rated.T5.explanation.summary) && /covers 3 of 5 categories/.test(rated.T5.explanation.summary)));
   test("scoring is reproducible: the same input gives the same output", () => eq(JSON.stringify(Ratings.rateAll(universe).T7), JSON.stringify(rated.T7)));
 
   section("Rating snapshots");
@@ -496,6 +496,58 @@ const Tests = (() => {
   test("previous EPS acceleration = last quarter's growth minus the quarter before's", () => {
     near(rated.T5.categories[3].factors.find((x) => x.id === "epsAccel").previous, (1.65 / 1.1 - 1) - (1.43 / 1.1 - 1));
   });
+
+  section("Personal price connection: parsing");
+  test("Twelve Data rows are read and put oldest first", () => {
+    const r = Market.parseTwelveData({ values: [{ datetime: "2026-11-24", open: "2", high: "3", low: "1", close: "2.5", volume: "100" }, { datetime: "2026-11-21", open: "1", high: "2", low: "1", close: "1.5", volume: "50" }] });
+    eq(r.rows.map((x) => x.date).join(","), "2026-11-21,2026-11-24"); eq(r.rows[1].close, 2.5); eq(r.rows[0].volume, 50);
+  });
+  test("a Twelve Data error is reported, and a rate-limit error is flagged as one", () => {
+    eq(Market.parseTwelveData({ status: "error", code: 401, message: "bad key" }).error, "bad key");
+    eq(Market.parseTwelveData({ status: "error", code: 429, message: "limit" }).limit, true);
+  });
+  test("Massive rows are read from millisecond timestamps", () => {
+    const r = Market.parseMassive({ status: "OK", results: [{ t: Date.UTC(2026, 10, 24), o: 1, h: 2, l: 0.5, c: 1.5, v: 9 }] });
+    eq(r.rows[0].date, "2026-11-24"); eq(r.rows[0].close, 1.5);
+  });
+  test("a CSV with an adjusted close column uses it in preference to close", () => {
+    const r = Market.parseCsv("Date,Open,High,Low,Close,Adj Close,Volume\n2026-11-24,10,11,9,10.5,5.25,1000\n2026-11-21,9,10,8,9,4.5,900");
+    eq(r.rows[0].date, "2026-11-21"); eq(r.rows[1].close, 5.25);
+  });
+  test("a CSV without a date or close column is refused with a reason", () => ok(/date/.test(Market.parseCsv("a,b\n1,2").error)));
+  test("zero or negative prices are dropped", () => eq(Market.parseCsv("date,close\n2026-11-21,0\n2026-11-24,5").rows.length, 1));
+
+  section("Personal price connection: alignment and checks");
+  const dts = ["2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21"];
+  test("a company is put on the benchmark's calendar; one missing day in 60 repeats the last close with zero volume", () => {
+    const d60 = Array.from({ length: 60 }, (_, i) => new Date(Date.UTC(2026, 0, 1) + i * 864e5).toISOString().slice(0, 10));
+    const rows = d60.filter((_, i) => i !== 30).map((d, i) => ({ date: d, high: i + 2, low: i, close: i + 1, volume: 10 }));
+    const s = Market.align(d60, rows);
+    eq(s.close.length, 60); eq(s.close[30], s.close[29]); eq(s.volume[30], 0); eq(s.close[31], 31);
+  });
+  test("a company with no dates in common is left out", () => eq(Market.align(dts, [{ date: "2020-01-01", close: 1 }]), null));
+  test("a company whose prices stop before the latest date is left out, not padded with old prices", () =>
+    eq(Market.align(dts, [{ date: "2026-11-17", close: 1 }, { date: "2026-11-18", close: 1 }]), null));
+  test("more than 2% of days missing is left out", () => eq(Market.align(dts, [{ date: "2026-11-17", close: 1 }, { date: "2026-11-21", close: 1 }]), null));
+  test("a one-day jump of more than 2.2x is caught as a likely unadjusted split", () => {
+    eq(Market.suspiciousJump([{ date: "a", close: 100 }, { date: "b", close: 25 }]), "b");
+    eq(Market.suspiciousJump([{ date: "a", close: 100 }, { date: "b", close: 80 }]), null);
+  });
+  test("build() needs the benchmark, and leaves out companies with too little history or bad jumps", () => {
+    eq(Boolean(Market.build({ AAPL: [] }, "x", "t").error), true);
+    const day = (i) => new Date(Date.UTC(2026, 0, 1) + i * 864e5).toISOString().slice(0, 10);
+    const rows = (n, p = 100, jumpAt = -1) => Array.from({ length: n }, (_, i) => ({ date: day(i), high: p, low: p, close: i === jumpAt ? p * 3 : p, volume: 1 }));
+    const f = Market.build({ SPY: rows(60), AAPL: rows(60), MSFT: rows(10), NVDA: rows(60, 100, 30) }, "Test", "2026-11-25T00:00:00Z");
+    eq(Object.keys(f.series).sort().join(","), "AAPL,SPY"); eq(f.skipped.length, 2); eq(f.personal, true); eq(f.dates.length, 60);
+  });
+
+  test("today's unfinished bar is dropped, so only completed closes are used", () => {
+    const day = (i) => new Date(Date.UTC(2026, 0, 1) + i * 864e5).toISOString().slice(0, 10);
+    const rows = Array.from({ length: 40 }, (_, i) => ({ date: day(i), high: 1, low: 1, close: 1, volume: 1 }));
+    const f = Market.build({ SPY: rows, AAPL: rows }, "x", "t", day(39));
+    eq(f.dates.length, 39); eq(f.dates[38], day(38));
+  });
+  test("the New York date is used for 'today' (4 a.m. UTC is still the previous day there)", () => eq(Market.newYorkDate(new Date("2026-11-25T04:00:00Z")), "2026-11-24"));
 
   section("Screener");
   const rows = universe.map((c) => Screen.row(c, rated[c.ticker], null));

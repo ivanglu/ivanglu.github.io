@@ -68,7 +68,7 @@
             ${top("Financial quality", "Returns on capital, balance-sheet strength and cash backing of profit.", "quality", "?sort=quality")}
             ${market ? top("Quantitative momentum", "Price and volume behaviour against a benchmark.", "quant", "?sort=quant") + top("Valuation", "Price compared with sales, profit and cash flow.", "valuation", "?sort=valuation") : ""}
           </div>
-          ${market ? "" : `<div style="margin-top:16px">${Views.noMarket()}</div>`}
+          ${market ? "" : `<div style="margin-top:16px">${Views.noMarket("Ranking by Quantitative momentum and Valuation")}</div>`}
         </section>
         <section class="fq-section"><h2>By peer group</h2><div class="fq-card">${sectors()}</div></section>
         <section class="fq-section"><div class="fq-dash">

@@ -221,20 +221,37 @@ const Views = (() => {
   const rfmt = (v, kind) => (isNum(v) ? Ratings.format(v, kind) : "n/a");
 
   // Six cards: the overall rating and the five categories.
+  // True when a category is empty only because share prices are not connected.
+  const waitsForPrices = (c) => !c.available && c.reason === Ratings.NO_MARKET + ".";
+
+  // A compact prompt shown where the price-based grades would be.
+  const connectPrompt = (names) => `
+    <div class="fq-connect">
+      <span><strong>${names.join(" and ")}</strong> ${names.length > 1 ? "are" : "is"} not graded yet: ${names.length > 1 ? "they need" : "it needs"} daily share prices.</span>
+      <a class="fq-btn fq-btn--primary" href="prices.html">Connect free price data</a>
+    </div>`;
+
+  // Cards for the overall rating and each graded category. Categories waiting for prices
+  // are folded into one short line instead of empty cards.
   function ratingCards(rating) {
+    const waiting = rating.categories.filter(waitsForPrices);
+    const shown = rating.categories.filter((c) => !waitsForPrices(c));
+    const graded = rating.categories.filter((c) => c.available).length;
     const overall = `
-      <div class="fq-rcard">
-        <h3>${rating.complete ? "Overall rating" : "Partial rating"}</h3>
+      <div class="fq-rcard fq-rcard--main">
+        <h3>${rating.complete ? "Overall rating" : `Rating from ${graded} of 5 categories`}</h3>
         <div class="fq-rcard__row">${gradeBox(rating.grade)}<strong>${scoreText(rating.overall)}</strong><span class="fq-muted">/ 100</span></div>
-        <small>${rating.complete ? "All five categories." : `From ${5 - rating.missing.length} of 5 categories (${Math.round(rating.weightCovered)}% of the weight). ${rating.missing.join(" and ")} not available.`}</small>
+        <small>${rating.complete ? "All five categories, weighted as shown." : `${Math.round(rating.weightCovered)}% of the full weighting. ${waiting.length ? "Add prices for a complete rating." : esc(rating.missing.join(" and ")) + " not available."}`}</small>
       </div>`;
-    return `<div class="fq-ratings">${overall}${rating.categories.map((c) => `
+    return `<div class="fq-ratings fq-ratings--${shown.length + 1}">${overall}${shown.map((c) => `
       <div class="fq-rcard ${c.available ? "" : "fq-rcard--na"}">
         <h3>${esc(c.label)} <span class="fq-muted">· ${c.weight.toFixed(0)}%</span></h3>
         <div class="fq-rcard__row">${gradeBox(c.grade)}<strong>${scoreText(c.score)}</strong>${c.available ? `<span class="fq-muted">${Ratings.GRADE_WORDS[c.grade]}</span>` : ""}</div>
-        <small>${c.available ? `${Math.round(c.coverage * 100)}% of measures available` : esc(c.reason)}</small>
-      </div>`).join("")}</div>`;
+        <small>${c.available ? esc(c.about) : esc(c.reason)}</small>
+      </div>`).join("")}</div>
+      ${waiting.length ? connectPrompt(waiting.map((c) => c.label)) : ""}`;
   }
+
 
   // Every measure behind one category: value, comparison, both scores and the result.
   function factorTable(cat, company) {
@@ -257,7 +274,7 @@ const Views = (() => {
         Source: ${esc(cat.source)}. Methodology version ${Ratings.VERSION}.</p>`;
   }
 
-  const factorSections = (rating, company, open = null) => rating.categories.map((c) => `
+  const factorSections = (rating, company, open = null) => rating.categories.filter((c) => !waitsForPrices(c) || c.id === open).map((c) => `
     <details class="fq-factors" ${c.id === open ? "open" : ""}>
       <summary>${gradeBox(c.grade, "sm")}${esc(c.label)} <span>${c.available ? `${scoreText(c.score)} / 100 · adds ${c.contribution.toFixed(1)} points to the rating` : "not available"}</span></summary>
       <div><p class="fq-panel__what">${esc(c.about)}</p>${c.available || c.factors.some((f) => isNum(f.score)) ? factorTable(c, company) : `<p class="fq-note">${esc(c.reason)}</p>`}</div>
@@ -275,8 +292,11 @@ const Views = (() => {
   }
 
   // Shown wherever a market-based figure would go when there is no price data.
-  const noMarket = () => `<div class="fq-note"><p><strong>Market data is not connected.</strong> Share prices are licensed data. No free source was found that permits a public website to show prices or figures calculated from them, so FinanceIQ does not show any.
-    The calculations are built and tested; they switch on when a licensed price file is added. See the <a href="methodology.html#market">methodology</a>.</p></div>`;
+  // Shown wherever a price-based figure would go when no prices are connected.
+  const noMarket = (what = "This section") => `<div class="fq-connect fq-connect--block">
+      <span><strong>${what} needs daily share prices.</strong> FinanceIQ can't publish prices, but you can connect a free source with your own key in about five minutes. The prices stay in your browser.</span>
+      <a class="fq-btn fq-btn--primary" href="prices.html">Connect free price data</a>
+    </div>`;
 
   return { gradeBox, rfmt, ratingCards, factorTable, factorSections, quarterChart, noMarket, METRICS, chart, legend, bar, scoreText, healthCard, SCORE_ROWS, scorecard, sourceTable, SCENARIOS, dcfRun, dcfScenarioTable, BENCH, benchmark };
 })();

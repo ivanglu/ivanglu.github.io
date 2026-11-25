@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Methodology · FinanceIQ</title>
   <meta name="description" content="How FinanceIQ collects SEC data, calculates every ratio, builds the Financial Health Score and runs its DCF model." />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'self'; form-action 'none'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.twelvedata.com https://api.massive.com; base-uri 'self'; form-action 'none'" />
   <meta name="theme-color" content="#0d0f14" />
-  <link rel="stylesheet" href="financeiq.css?v=3.1.0" />
+  <link rel="stylesheet" href="financeiq.css?v=3.2.0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ff7a3d'/%3E%3Ctext x='50' y='72' font-size='64' font-weight='800' text-anchor='middle' font-family='Arial' fill='%2314171c'%3EF%3C/text%3E%3C/svg%3E" />
-  <script src="../theme.js?v=3.1.0"></script>
+  <script src="../theme.js?v=3.2.0"></script>
 </head>
 <body class="fq-is-loading">
   <a class="fq-skip" href="#app">Skip to content</a>
@@ -107,12 +107,13 @@
       <h3>What a grade means, and does not</h3>
       <p class="fq-note">A grade summarises reported results and, when connected, past prices, using fixed published rules. An A is not a buy signal and an F is not a sell signal. The ratings have not been back-tested, so there is no evidence here that higher grades lead to better returns. Rating snapshots have been saved since 25 November 2026 so that this can be examined honestly later.</p>
 
-      <h2 id="market">Market data, and why two grades are empty</h2>
-      <p>Quantitative momentum and Valuation need share prices. Prices are licensed data. Before building these grades, the terms of nine data providers were read (see <code>docs/DATA_PROVIDER_COMPARISON.md</code>). No free plan was found that clearly permits a public website to show prices or figures calculated from them, so FinanceIQ shows neither.</p>
+      <h2 id="market">Market data: connect your own</h2>
+      <p>Quantitative momentum and Valuation need share prices. Prices are licensed data. Before building these grades, the terms of nine data providers were read (see <code>docs/DATA_PROVIDER_COMPARISON.md</code>). No free plan was found that clearly permits a public website to show prices, or figures calculated from them, to everyone. Yahoo Finance's terms forbid automated collection. So FinanceIQ publishes no prices.</p>
       <ul>
-        <li>The calculations exist, are unit-tested, and are checked against a second implementation written separately in Python.</li>
-        <li>They switch on when a price file obtained under a suitable licence is added with <code>tools/build_prices.py</code>. Nothing else on the site depends on it.</li>
-        <li>Until then the Valuation tab lets you type a share price yourself to see the multiples and a reverse DCF for one company. That price stays in your browser.</li>
+        <li><strong>You can connect your own.</strong> On the <a href="prices.html">Prices page</a>, paste a free key from Twelve Data or Massive (formerly Polygon.io), or import CSV files you downloaded. Your browser fetches about two years of daily, split-adjusted prices for every company and for SPY (the S&amp;P 500 benchmark), and keeps them in this browser only. Both grades, the price charts and the market columns in the screener then switch on, for you.</li>
+        <li>Today's unfinished trading day is left out, so every figure uses completed closing prices. A company whose prices stop early, miss more than 2% of days, or jump more than 2.2× in a day (a sign of an unadjusted split) is left out rather than guessed.</li>
+        <li>The calculations are unit-tested and checked against a second implementation written separately in Python.</li>
+        <li>Without prices, the Valuation tab still lets you type a share price for one company to see its multiples and a reverse DCF.</li>
         <li><strong>Volume measures are proxies.</strong> On-Balance Volume, Chaikin Money Flow and up/down volume describe how much traded on rising and falling days. They cannot show who traded, and are never described here as institutional buying.</li>
         <li><strong>Returns are price returns.</strong> Dividends are not included, for the stock or the benchmark.</li>
       </ul>
@@ -155,13 +156,14 @@
     </section>
   </main>
   <footer class="fq-footer" id="fq-footer"></footer>
-  <script src="js/calc.js?v=3.1.0"></script>
-  <script src="js/quant.js?v=3.1.0"></script>
-  <script src="js/ratings.js?v=3.1.0"></script>
-  <script src="js/screen.js?v=3.1.0"></script>
-  <script src="js/chart.js?v=3.1.0"></script>
-  <script src="js/core.js?v=3.1.0"></script>
-  <script src="js/views.js?v=3.1.0"></script>
-  <script src="js/pages/methodology.js?v=3.1.0"></script>
+  <script src="js/calc.js?v=3.2.0"></script>
+  <script src="js/quant.js?v=3.2.0"></script>
+  <script src="js/ratings.js?v=3.2.0"></script>
+  <script src="js/screen.js?v=3.2.0"></script>
+  <script src="js/market.js?v=3.2.0"></script>
+  <script src="js/chart.js?v=3.2.0"></script>
+  <script src="js/core.js?v=3.2.0"></script>
+  <script src="js/views.js?v=3.2.0"></script>
+  <script src="js/pages/methodology.js?v=3.2.0"></script>
 </body>
 </html>

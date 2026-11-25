@@ -250,7 +250,7 @@ const Ratings = (() => {
       const best = cats[0], worst = cats[cats.length - 1];
       summary = `${company.name} scores highest on ${best.label.toLowerCase()} (${best.grade})`;
       summary += cats.length > 1 && worst.grade !== best.grade ? ` and lowest on ${worst.label.toLowerCase()} (${worst.grade}).` : ".";
-      if (!result.complete) summary += ` This is a partial rating: ${result.missing.join(" and ")} ${result.missing.length > 1 ? "are" : "is"} not available.`;
+      if (!result.complete) summary += ` The rating covers ${5 - result.missing.length} of 5 categories; ${result.missing.join(" and ")} ${result.missing.length > 1 ? "are" : "is"} not graded.`;
     }
     return { summary, positives: positives.map(say), negatives: negatives.map(say) };
   }

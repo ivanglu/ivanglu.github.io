@@ -542,3 +542,45 @@ details.fq-factors > div { padding: 0 14px 14px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
 main[tabindex="-1"]:focus { outline: none; }
+
+/* ---------- version 3.2: price connection ---------- */
+
+/* the one-line prompt shown where price-based grades would be */
+.fq-connect { display: flex; align-items: center; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap; margin-top: 12px; padding: 12px 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); font-size: 14.5px; color: var(--fg-muted); }
+.fq-connect strong { color: var(--fg); }
+.fq-connect .fq-btn { flex: none; }
+.fq-connect--block { margin-top: 0; }
+.fq-ratings--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1000px) { .fq-ratings--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .fq-ratings--4 { grid-template-columns: 1fr; } }
+
+/* price status in the top bar */
+.fq-pill { font-size: 12.5px; font-weight: 600; color: var(--accent); border: 1px solid var(--border-strong); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+.fq-pill:hover { text-decoration: none; border-color: var(--accent); }
+.fq-pill--on { color: var(--good); }
+.fq-pill--on::before { content: "●"; margin-right: 5px; font-size: 9px; vertical-align: 1px; }
+
+.fq-rcard--main { border-color: var(--border-strong); }
+.fq-seg button[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+/* prices page */
+.fq-providers { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin: 6px 0 18px; }
+.fq-provider { display: grid; gap: 4px; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; font-size: 14px; color: var(--fg-muted); }
+.fq-provider strong { color: var(--fg); font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.fq-provider input { position: absolute; opacity: 0; }
+.fq-provider.is-on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.fq-provider:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fq-steps { margin: 0; padding-left: 22px; display: grid; gap: 14px; }
+.fq-steps li { padding-left: 4px; }
+.fq-keyrow { display: flex; gap: 8px; margin: 8px 0 6px; max-width: 520px; }
+.fq-keyrow input { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: 14px; }
+.fq-keyrow input[aria-invalid="true"] { border-color: var(--bad); }
+.fq-check { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--fg-muted); }
+.fq-progress { height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; margin: 16px 0 8px; }
+.fq-progress span { display: block; height: 100%; background: var(--accent); transition: width 0.3s ease; }
+.fq-connected h3 { display: flex; align-items: center; gap: 8px; }
+.fq-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--fg-dim); display: inline-block; }
+.fq-dot--on { background: var(--good); }
+label.fq-btn { cursor: pointer; }
+
+@media (max-width: 760px) { .fq-pill { padding: 3px 8px; font-size: 12px; } .fq-top__right { gap: 10px; } }
