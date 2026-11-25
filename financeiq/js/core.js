@@ -1,9 +1,12 @@
 /* ============================================================
-   FinanceIQ shared page code: loading data, navigation, the company
-   picker, glossary tooltips, saved settings and the guided tour.
+   FinanceIQ shared page code: loading data, navigation, search,
+   company selection, themes, saved settings and the guided tour.
 
-   Every page calls  Core.start({ page, usesPair, render })  once.
-   `render(A, B)` is called again whenever the selected companies change.
+   Every page calls  Core.start({ page, mode, render })  once.
+     mode "single"  one company, address ends in  #NVDA       render(company)
+     mode "pair"    two companies, address ends in #NVDA-MSFT  render(A, B)
+     mode "none"    no company selected                        render()
+   `render` is called again whenever the selection changes.
    ============================================================ */
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -16,17 +19,24 @@ const Core = (() => {
   const DEFAULT_PAIR = ["AAPL", "MSFT"];
   const COLORS = ["var(--series-a)", "var(--series-b)"];
 
-  const PAGES = [
-    { id: "overview", file: "index.html", label: "Overview" },
-    { id: "compare", file: "compare.html", label: "Comparison" },
-    { id: "health", file: "health.html", label: "Financial Health" },
-    { id: "valuation", file: "valuation.html", label: "Valuation" },
-    { id: "trends", file: "trends.html", label: "Trends" },
-    { id: "benchmarks", file: "benchmarks.html", label: "Benchmarks" },
+  // Main navigation. `section` groups the comparison pages under one entry.
+  const NAV = [
+    { id: "dashboard", file: "index.html", label: "Dashboard" },
+    { id: "screener", file: "screener.html", label: "Screener" },
+    { id: "compare", file: "compare.html", label: "Compare" },
+    { id: "watchlist", file: "watchlist.html", label: "Watchlist" },
     { id: "research", file: "research.html", label: "Research" },
     { id: "methodology", file: "methodology.html", label: "Methodology" },
-    { id: "about", file: "about.html", label: "About" },
   ];
+  const COMPARE_PAGES = [
+    { id: "compare", file: "compare.html", label: "Summary" },
+    { id: "health", file: "health.html", label: "Financial Health" },
+    { id: "valuation", file: "valuation.html", label: "DCF valuation" },
+    { id: "trends", file: "trends.html", label: "Trends" },
+    { id: "benchmarks", file: "benchmarks.html", label: "Benchmarks" },
+    { id: "report", file: "report.html", label: "PDF report" },
+  ];
+  const SINGLE_FILES = ["company.html"];
 
   // Plain-English definitions, shown when a term is hovered or focused.
   const GLOSSARY = {
@@ -62,13 +72,23 @@ const Core = (() => {
     discountRate: "The yearly return investors require. Future cash is divided by (1 + rate) for every year you wait for it.",
     terminalGrowth: "The growth rate assumed forever after the projection period. It should not be higher than long-run economic growth.",
     terminalValue: "The value today of all cash flows after the projection period, from the Gordon growth formula.",
-    enterpriseValue: "The value of the whole business, belonging to lenders and shareholders together.",
+    enterpriseValue: "The value of the whole business, belonging to lenders and shareholders together: market value + debt − cash.",
     equityValue: "Enterprise value minus debt plus cash: the part that belongs to shareholders.",
     median: "The middle value when the group is sorted. Half the companies are above it and half below.",
     tenK: "Form 10-K: the audited annual report every US public company files with the SEC.",
+    tenQ: "Form 10-Q: the quarterly report filed with the SEC for the first three quarters of each fiscal year.",
+    ttm: "Trailing twelve months: the last four quarters added together, so the figure is always a full year and always recent.",
+    yoy: "Year over year: compared with the same period one year earlier, which removes seasonal effects.",
+    acceleration: "The change in a growth rate. Growth of 20% after 30% is still growth, but it is decelerating by 10 points.",
+    pe: "Price-to-earnings: share price ÷ earnings per share over the last twelve months. Not meaningful when earnings are negative.",
+    marketCap: "Market capitalization: share price × number of shares. What the stock market says the equity is worth.",
+    wacc: "Weighted average cost of capital: the blended return that lenders and shareholders require, used as the discount rate.",
+    percentile: "Position within a group, from 0 (lowest) to 100 (highest). Here the group is the companies FinanceIQ tracks, not the whole market.",
+    momentum: "The tendency of shares that have done well recently to keep doing well for a while, and the reverse. Measured from past prices.",
+    relativeStrength: "A share's return minus the return of a benchmark over the same period.",
   };
 
-  const state = { data: null, summaries: null, byTicker: {}, list: [], a: null, b: null, cfg: null };
+  const state = { data: null, summaries: null, byTicker: {}, list: [], a: null, b: null, cfg: null, market: null, marketInfo: null, ratings: {}, history: [] };
 
   /* ---------------- small helpers ---------------- */
 
@@ -82,17 +102,17 @@ const Core = (() => {
     remove(key) { try { localStorage.removeItem("fq." + key); } catch (e) { /* ignore */ } },
   };
 
-  async function getJSON(url) {
+  async function getJSON(url, optional = false) {
     const res = await fetch(url);
-    if (!res.ok) throw new Error(url + " returned " + res.status);
+    if (!res.ok) { if (optional) return null; throw new Error(url + " returned " + res.status); }
     return res.json();
   }
   const getText = (url) => fetch(url).then((r) => (r.ok ? r.text() : "")).catch(() => "");
 
   // Apple -> Apple's, Starbucks -> Starbucks', McDonald's -> McDonald's
   const poss = (name) => (name.endsWith("'s") ? name : name.endsWith("s") ? name + "'" : name + "'s");
-
   const swatch = (i) => `<i class="fq-swatch" style="background:${COLORS[i]}"></i>`;
+  const known = (t) => Boolean(state.byTicker[t]);
 
   /* ---------------- Ivan's text files ---------------- */
 
@@ -118,11 +138,7 @@ const Core = (() => {
     return html;
   }
 
-  // Ivan's files look like this:
-  //     published: January 2027          <- optional "key: value" lines first
-  //
-  //     ## Initial hypothesis            <- one "## heading" per section
-  //     text...
+  // Ivan's files: optional "key: value" lines, then one "## heading" per section.
   // Anything inside <!-- --> is ignored. Returns { meta, sections: { "initial hypothesis": html } }.
   function parseDoc(text) {
     const lines = text.replace(/<!--[\s\S]*?-->/g, "").replace(/\r/g, "").split("\n");
@@ -142,91 +158,196 @@ const Core = (() => {
     return { meta, sections };
   }
 
-  /* ---------------- selected companies ---------------- */
+  /* ---------------- search box with suggestions ---------------- */
 
-  const known = (t) => Boolean(state.byTicker[t]);
+  // Turns an <input> into a combobox: type to filter, arrow keys to move, Enter to choose.
+  //   onSelect(ticker)   called when a company is chosen
+  //   exclude()          ticker to leave out (the other company on a comparison page)
+  //   emptyList()        companies to show before anything is typed (recent ones, or all)
+  function combo(input, { onSelect, exclude = () => null, emptyList = () => [], keepValue = false }) {
+    const list = document.createElement("ul");
+    const id = "fq-list-" + Math.random().toString(36).slice(2, 8);
+    list.className = "fq-combo__list"; list.id = id; list.setAttribute("role", "listbox"); list.hidden = true;
+    input.parentElement.appendChild(list);
+    input.setAttribute("role", "combobox"); input.setAttribute("aria-autocomplete", "list");
+    input.setAttribute("aria-controls", id); input.setAttribute("aria-expanded", "false"); input.setAttribute("autocomplete", "off");
+    let items = [], active = -1;
 
-  // The pair lives in the URL (#AAPL-MSFT) so any view can be shared as a link.
-  function pairFromHash() {
-    const m = location.hash.match(/^#([A-Z]+)-([A-Z]+)$/);
-    return m && known(m[1]) && known(m[2]) && m[1] !== m[2] ? [m[1], m[2]] : null;
+    const close = () => { list.hidden = true; input.setAttribute("aria-expanded", "false"); input.removeAttribute("aria-activedescendant"); active = -1; };
+    const highlight = () => {
+      $$("li", list).forEach((li, i) => li.setAttribute("aria-selected", i === active));
+      if (active >= 0) { input.setAttribute("aria-activedescendant", `${id}-${active}`); $$("li", list)[active].scrollIntoView({ block: "nearest" }); }
+    };
+    const open = () => {
+      const text = input.value.trim();
+      const skip = exclude();
+      items = (text ? Screen.search(state.list, text, 10) : emptyList()).filter((c) => c.ticker !== skip);
+      if (!items.length) {
+        list.innerHTML = `<li class="fq-combo__none" role="option" aria-disabled="true">${text ? `No supported company matches "${esc(text)}". FinanceIQ tracks ${state.list.length} companies.` : "Type a ticker or company name"}</li>`;
+      } else {
+        list.innerHTML = (text ? "" : `<li class="fq-combo__head" role="presentation">${input.dataset.emptyLabel || "Companies"}</li>`) + items.map((c, i) => {
+          const r = state.ratings[c.ticker];
+          return `<li role="option" id="${id}-${i}" data-i="${i}"><b>${esc(c.ticker)}</b><span>${esc(c.name)}</span><small>${esc(c.group === "Other" ? c.blurb : c.group)}</small>${r && r.grade ? `<i class="fq-grade fq-grade--${r.grade} fq-grade--sm">${r.grade}</i>` : ""}</li>`;
+        }).join("");
+      }
+      active = text && items.length ? 0 : -1;
+      list.hidden = false; input.setAttribute("aria-expanded", "true"); highlight();
+    };
+    const choose = (c) => { if (!c) return; input.value = keepValue ? `${c.name} (${c.ticker})` : ""; close(); onSelect(c.ticker); };
+
+    input.addEventListener("input", open);
+    input.addEventListener("focus", () => { if (keepValue) input.select(); open(); });
+    input.addEventListener("blur", () => setTimeout(() => { close(); if (keepValue && input.dataset.current) input.value = input.dataset.current; }, 150));
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        if (list.hidden) { open(); return; }
+        if (!items.length) return;
+        active = (active + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length; highlight();
+      } else if (e.key === "Enter") {
+        if (!list.hidden && items.length) { e.preventDefault(); choose(items[Math.max(0, active)]); }
+      } else if (e.key === "Escape") { close(); }
+    });
+    list.addEventListener("mousedown", (e) => { const li = e.target.closest("li[data-i]"); if (li) { e.preventDefault(); choose(items[Number(li.dataset.i)]); } });
+    return { open, close };
   }
 
-  function setPair(a, b, updateHash = true) {
-    state.a = a; state.b = b;
-    store.set("pair", [a, b]);
-    if (updateHash) history.replaceState(null, "", location.pathname + location.search + `#${a}-${b}`);
-    $$("a[data-nav]").forEach((el) => { el.href = el.dataset.nav + `#${a}-${b}`; });
-    if (state.cfg.usesPair) renderPicker();
+  const recent = () => store.get("recent", []).map((t) => state.byTicker[t]).filter(Boolean);
+  function remember(ticker) { store.set("recent", [ticker, ...store.get("recent", []).filter((t) => t !== ticker)].slice(0, 6)); }
+  const byGroup = () => [...state.list].sort((x, y) => (x.group === "Other") - (y.group === "Other") || x.group.localeCompare(y.group) || x.name.localeCompare(y.name));
+
+  /* ---------------- selection ---------------- */
+
+  // #NVDA -> ["NVDA"], #NVDA-MSFT -> ["NVDA", "MSFT"], anything else -> null
+  function fromHash() {
+    const m = location.hash.match(/^#([A-Z]+)(?:-([A-Z]+))?$/);
+    if (!m || !known(m[1])) return null;
+    return m[2] && known(m[2]) && m[2] !== m[1] ? [m[1], m[2]] : [m[1]];
+  }
+
+  // A sensible second company: a peer from the same group, else the default.
+  function partnerFor(a) {
+    const saved = store.get("pair", null);
+    if (saved && saved[0] === a && known(saved[1])) return saved[1];
+    const c = state.byTicker[a];
+    const peer = state.list.find((p) => p.group === c.group && p.ticker !== a && c.group !== "Other");
+    return peer ? peer.ticker : DEFAULT_PAIR.find((t) => t !== a);
+  }
+
+  const hashFor = (file) => (SINGLE_FILES.includes(file) ? `#${state.a}` : `#${state.a}-${state.b}`);
+
+  function select(a, b, updateHash = true) {
+    state.a = a; state.b = b || partnerFor(a);
+    store.set("pair", [state.a, state.b]);
+    const single = state.cfg.mode === "single";
+    if (single) remember(a);
+    if (updateHash) history.replaceState(null, "", location.pathname + location.search + (single ? `#${a}` : `#${state.a}-${state.b}`));
+    $$("a[data-nav]").forEach((el) => { el.href = el.dataset.nav + (state.a ? hashFor(el.dataset.nav) : ""); });
+    if (state.cfg.mode === "pair") renderPicker();
     return rerender();
   }
+  const setPair = (a, b, updateHash = true) => select(a, b, updateHash);
 
   function rerender() {
-    const A = state.byTicker[state.a], B = state.byTicker[state.b];
     document.body.classList.remove("fq-is-loading");
-    return state.cfg.render(A, B);
+    const A = state.byTicker[state.a], B = state.byTicker[state.b];
+    if (state.cfg.mode === "single") return state.cfg.render(A);
+    if (state.cfg.mode === "pair") return state.cfg.render(A, B);
+    return state.cfg.render();
   }
 
+  // Two search boxes for the comparison pages. Type to filter, or focus to see every company.
   function renderPicker() {
     const host = $("#fq-picker");
     if (!host) return;
-    const groups = [...new Set(state.list.map((c) => c.group))];
-    const options = (selected, other) => groups.map((g) => `<optgroup label="${esc(g === "Other" ? "Other industries" : g)}">${
-      state.list.filter((c) => c.group === g).map((c) =>
-        `<option value="${c.ticker}" ${c.ticker === selected ? "selected" : ""} ${c.ticker === other ? "disabled" : ""}>${esc(c.name)} (${c.ticker})</option>`).join("")
-    }</optgroup>`).join("");
+    const label = (t) => `${state.byTicker[t].name} (${t})`;
     host.innerHTML = `
       <form class="fq-picker" aria-label="Choose two companies">
-        <label class="fq-pick"><span class="fq-pick__label">${swatch(0)}Company A</span><select id="selA">${options(state.a, state.b)}</select></label>
+        <label class="fq-pick"><span class="fq-pick__label">${swatch(0)}Company A</span>
+          <span class="fq-combo"><input id="pickA" type="text" value="${esc(label(state.a))}" data-current="${esc(label(state.a))}" data-empty-label="All companies" aria-label="Company A: type a ticker or name"></span></label>
         <button type="button" id="swap" class="fq-swap" title="Swap companies" aria-label="Swap companies">⇄</button>
-        <label class="fq-pick"><span class="fq-pick__label">${swatch(1)}Company B</span><select id="selB">${options(state.b, state.a)}</select></label>
+        <label class="fq-pick"><span class="fq-pick__label">${swatch(1)}Company B</span>
+          <span class="fq-combo"><input id="pickB" type="text" value="${esc(label(state.b))}" data-current="${esc(label(state.b))}" data-empty-label="All companies" aria-label="Company B: type a ticker or name"></span></label>
       </form>`;
-    $("#selA").addEventListener("change", (e) => setPair(e.target.value, state.b));
-    $("#selB").addEventListener("change", (e) => setPair(state.a, e.target.value));
-    $("#swap").addEventListener("click", () => setPair(state.b, state.a));
+    combo($("#pickA"), { keepValue: true, exclude: () => state.b, emptyList: byGroup, onSelect: (t) => select(t, state.b) });
+    combo($("#pickB"), { keepValue: true, exclude: () => state.a, emptyList: byGroup, onSelect: (t) => select(state.a, t) });
+    $("#swap").addEventListener("click", () => select(state.b, state.a));
+    $(".fq-picker", host).addEventListener("submit", (e) => e.preventDefault());
   }
 
   /* ---------------- page furniture ---------------- */
 
+  const applyTheme = () => {
+    if (document.body.dataset.fixedTheme) return;
+    document.body.classList.toggle("fq-light", store.get("theme", "dark") === "light");
+  };
+
   function renderNav(page) {
-    const links = PAGES.map((p) =>
-      `<a data-nav="${p.file}" href="${p.file}" ${p.id === page ? 'aria-current="page"' : ""}>${p.label}</a>`).join("");
-    $("#fq-nav").innerHTML = `
+    const host = $("#fq-nav");
+    if (!host || host.hidden) return;
+    const section = COMPARE_PAGES.some((p) => p.id === page) ? "compare" : page;
+    const links = NAV.map((p) => `<a data-nav="${p.file}" href="${p.file}" ${p.id === section ? 'aria-current="page"' : ""}>${p.label}</a>`).join("");
+    const sub = section === "compare" ? `<nav class="fq-subnav" aria-label="Comparison pages">${COMPARE_PAGES.map((p) =>
+      `<a data-nav="${p.file}" href="${p.file}" ${p.id === page ? 'aria-current="page"' : ""}>${p.label}</a>`).join("")}</nav>` : "";
+    host.innerHTML = `
       <div class="fq-top__bar">
-        <a class="fq-brand" data-nav="index.html" href="index.html"><span class="fq-brand__mark">F</span>FinanceIQ</a>
-        <a class="fq-home" href="../">ivanglushchenko.com</a>
+        <a class="fq-brand" href="index.html"><span class="fq-brand__mark">F</span>FinanceIQ</a>
+        <span class="fq-combo fq-search"><input id="fq-search" type="search" placeholder="Search ticker or company" aria-label="Search for a company by ticker or name" data-empty-label="Recently viewed"></span>
+        <span class="fq-top__right">
+          <button type="button" class="fq-iconbtn" id="fq-theme" aria-label="Switch between light and dark theme" title="Light / dark">◐</button>
+          <a class="fq-home" href="about.html">About</a>
+          <a class="fq-home fq-hide-sm" href="../">ivanglushchenko.com</a>
+        </span>
       </div>
-      <nav class="fq-nav" aria-label="FinanceIQ sections">${links}</nav>`;
-    const current = $(".fq-nav [aria-current]");
-    if (current && current.scrollIntoView) current.scrollIntoView({ block: "nearest", inline: "center" });
+      <nav class="fq-nav" aria-label="FinanceIQ sections">${links}</nav>${sub}`;
+    $("#fq-theme").addEventListener("click", () => { store.set("theme", store.get("theme", "dark") === "light" ? "dark" : "light"); applyTheme(); window.dispatchEvent(new Event("fq-theme")); });
+  }
+
+  function wireSearch() {
+    const input = $("#fq-search");
+    if (!input) return;
+    combo(input, {
+      emptyList: () => (recent().length ? recent() : byGroup().slice(0, 8)),
+      onSelect: (t) => { location.href = `company.html#${t}`; if (location.pathname.endsWith("company.html")) select(t); },
+    });
+    if (!recent().length) input.dataset.emptyLabel = "Companies";
+    // "/" jumps to the search box, like most research sites
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); input.focus(); }
+    });
   }
 
   function renderFooter() {
-    const d = state.data;
-    $("#fq-footer").innerHTML = `
-      <p><strong>Data:</strong> ${esc(d.source)}. Last successful update ${esc(d.generated)}.
-        Annual figures in US dollars, shown as first reported. <a data-nav="methodology.html" href="methodology.html">Methodology</a></p>
-      <p><strong>Educational project, not investment advice.</strong> Scores and valuations here are learning tools built on stated
-        assumptions. They do not predict share prices and are not recommendations to buy or sell anything.</p>
-      <p>Built by Ivan Glushchenko. <a data-nav="about.html" href="about.html">About this project</a> · <a href="../">ivanglushchenko.com</a></p>`;
+    const host = $("#fq-footer");
+    if (!host || host.hidden) return;
+    const d = state.data, m = state.marketInfo;
+    host.innerHTML = `
+      <p><strong>Financial data:</strong> ${esc(d.source)}. Last successful update ${esc(d.generated)}. Dollar figures are shown as first reported.
+        <strong>Market data:</strong> ${m ? `${esc(m.source)}, prices to ${esc(m.asOf)}.` : "none. FinanceIQ has no licensed price feed yet, so the Quantitative and Valuation grades are not shown."}
+        <a href="methodology.html">Methodology</a></p>
+      <p><strong>Educational project, not investment advice.</strong> Grades, scores and valuations are built from published rules and stated assumptions.
+        They describe the past. They do not predict share prices, and an A is not a recommendation to buy.</p>
+      <p>Built by Ivan Glushchenko. <a href="about.html">About this project</a> · <a href="tests/">Tests</a> · <a href="../">ivanglushchenko.com</a></p>`;
   }
 
   /* ---------------- guided tour ---------------- */
 
   const TOUR = [
-    { page: "overview", text: "<strong>Pick two companies.</strong> Use the two menus to choose any pair. Every page then updates for that pair. Apple and Microsoft are loaded to start." },
-    { page: "health", text: "<strong>Financial Health Score.</strong> Each company gets a score from 0 to 100, built from 19 measures in five categories. The bars show where each one is strong or weak." },
-    { page: "health", focus: "#weights", text: "<strong>Change what matters.</strong> Click the Conservative preset, or drag a slider. The weights always re-balance to 100% and both scores update at once." },
-    { page: "valuation", text: "<strong>DCF valuation.</strong> Drag the growth or discount-rate slider and watch the value per share move. The table at the bottom shows how much the answer depends on just two assumptions." },
+    { page: "dashboard", text: "<strong>Search for a company.</strong> Type a ticker or name in the search box (try NV) and pick one. The dashboard below shows the highest-graded companies in each category." },
+    { page: "company", text: "<strong>One company, five grades.</strong> Each stock is graded on fundamentals, earnings momentum and financial quality from SEC filings. Open any grade to see every measure behind it." },
+    { page: "screener", text: "<strong>Screen all companies.</strong> Sort by any column, filter by grade or sector, or start from a ready-made screen. Tick two rows to compare them." },
+    { page: "valuation", text: "<strong>DCF valuation.</strong> Drag the growth or discount-rate slider and watch the value per share move. The sensitivity table shows how much the answer depends on two assumptions." },
     { page: "research", text: "<strong>Ivan's Financial Research.</strong> Each case study starts from a question, tests it against the filings and ends with Ivan's own conclusion." },
   ];
+  const TOUR_FILES = { dashboard: "index.html", company: "company.html", screener: "screener.html", valuation: "valuation.html", research: "research.html" };
 
   function tourGo(step) {
     if (step < 0 || step >= TOUR.length) { sessionStorage.removeItem("fq.tour"); renderTour(); return; }
     sessionStorage.setItem("fq.tour", String(step));
-    const target = PAGES.find((p) => p.id === TOUR[step].page);
-    if (target.id === state.cfg.page) renderTour();
-    else location.href = target.file + `#${state.a}-${state.b}`;
+    const target = TOUR[step].page;
+    if (target === state.cfg.page) { renderTour(); return; }
+    const a = state.a || DEFAULT_PAIR[0], b = state.b || partnerFor(a);
+    location.href = TOUR_FILES[target] + (target === "company" ? `#${a}` : target === "valuation" ? `#${a}-${b}` : "");
   }
 
   function renderTour() {
@@ -244,17 +365,20 @@ const Core = (() => {
         ${last ? "" : `<button type="button" class="fq-btn--primary" data-tour="${step + 1}">Next</button>`}
       </div>`;
     $$("[data-tour]", host).forEach((b) => b.addEventListener("click", () => tourGo(Number(b.dataset.tour))));
-    if (s.focus && $(s.focus)) $(s.focus).scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   /* ---------------- saved settings ---------------- */
 
   const getWeights = () => store.get("weights", { ...Calc.PRESETS.Default });
   const score = (company) => Calc.scoreCompany(company, getWeights());
+  const ratingWeights = () => store.get("ratingWeights", { ...Ratings.PRESETS.Balanced });
+  function setRatingWeights(w) { store.set("ratingWeights", w); state.ratings = Ratings.rateAll(state.list, state.market, w); }
 
   // DCF assumptions for one company: the saved ones if the user changed them, else the defaults.
   function dcfInputs(company) {
     const defaults = Calc.dcfDefaults(company);
+    const m = state.market && state.market[company.ticker];
+    if (m) defaults.price = m.v.price;
     const saved = store.get("dcf." + company.ticker, null);
     // saved assumptions are only reused if they were made for the same fiscal year
     return saved && saved.fy === company.L.fy ? { ...defaults, ...saved.inputs, custom: true } : { ...defaults, custom: false };
@@ -262,26 +386,70 @@ const Core = (() => {
   const saveDcf = (company, inputs) => store.set("dcf." + company.ticker, { fy: company.L.fy, inputs });
   const resetDcf = (company) => store.remove("dcf." + company.ticker);
 
+  const watchlist = () => store.get("watchlist", []).filter(known);
+  const toggleWatch = (ticker) => { store.set("watchlist", Screen.toggle(store.get("watchlist", []), ticker)); return watchlist().includes(ticker); };
+
+  // Change in a company's rating between the two most recent stored snapshots (null if there is only one).
+  function ratingChange(ticker) {
+    const h = state.history;
+    if (h.length < 2) return null;
+    const ch = Ratings.changes(h[h.length - 2].ratings[ticker], h[h.length - 1].ratings[ticker]);
+    return ch ? { ...ch, fromDate: h[h.length - 2].date, toDate: h[h.length - 1].date } : null;
+  }
+
+  /* ---------------- market data (optional) ---------------- */
+
+  // data/prices.json exists only when a licensed price source has been connected (tools/build_prices.py).
+  // Without it the site still works: the two market-based grades simply show as unavailable.
+  function loadMarket(file) {
+    if (!file || !file.series) return;
+    const bench = file.series[file.benchmark];
+    state.market = {};
+    for (const c of state.list) {
+      const s = file.series[c.ticker];
+      if (!s || !s.close || s.close.length < 30) continue;
+      const price = s.close[s.close.length - 1];
+      state.market[c.ticker] = { q: Quant.metrics(s, bench || null), v: Calc.valuation(c, price) || { price }, series: s };
+    }
+    state.marketInfo = { source: file.source, asOf: file.dates[file.dates.length - 1], dates: file.dates, benchmark: file.benchmark,
+                         benchSeries: bench, showPrices: Boolean(file.license && file.license.displayPrices), attribution: file.license && file.license.attribution };
+    if (!Object.keys(state.market).length) { state.market = null; state.marketInfo = null; }
+  }
+
   /* ---------------- start ---------------- */
 
   async function start(cfg) {
+    cfg.mode = cfg.mode || (cfg.usesPair ? "pair" : "none");
     state.cfg = cfg;
+    applyTheme();
     renderNav(cfg.page);
     try {
-      const [data, summaries] = await Promise.all([getJSON("data/financials.json"), getJSON("data/summaries.json")]);
+      const [data, summaries, prices, history] = await Promise.all([
+        getJSON("data/financials.json"), getJSON("data/summaries.json"),
+        getJSON("data/prices.json", true).catch(() => null), getJSON("data/ratings-history.json", true).catch(() => null),
+      ]);
       state.data = data; state.summaries = summaries;
       data.companies.forEach((c) => { Calc.derive(c); state.byTicker[c.ticker] = c; });
       state.list = data.companies;
+      loadMarket(prices);
+      // only snapshots made with the current methodology can be compared with each other
+      state.history = (history && history.snapshots ? history.snapshots : []).filter((h) => h.version === Ratings.VERSION);
+      state.ratings = Ratings.rateAll(state.list, state.market, ratingWeights());
       renderFooter();
+      wireSearch();
+
       const saved = store.get("pair", null);
-      const pair = pairFromHash() || (saved && known(saved[0]) && known(saved[1]) && saved[0] !== saved[1] ? saved : DEFAULT_PAIR);
-      window.addEventListener("hashchange", () => { const p = pairFromHash(); if (p && (p[0] !== state.a || p[1] !== state.b)) setPair(p[0], p[1], false); });
-      await setPair(pair[0], pair[1], Boolean(cfg.usesPair));
+      const sel = fromHash() || (saved && known(saved[0]) ? saved : DEFAULT_PAIR);
+      window.addEventListener("hashchange", () => {
+        const p = fromHash();
+        if (p && (p[0] !== state.a || (p[1] && p[1] !== state.b))) select(p[0], p[1] || (cfg.mode === "pair" ? state.b : null), false);
+      });
       // index.html?tour=1 starts the guided tour (used by the link on the main site)
       if (new URLSearchParams(location.search).get("tour") === "1") {
         sessionStorage.setItem("fq.tour", "0");
         history.replaceState(null, "", location.pathname + location.hash);
       }
+      await select(sel[0], sel[1] && sel[1] !== sel[0] ? sel[1] : null, cfg.mode !== "none");
       renderTour();
     } catch (err) {
       console.error(err);
@@ -291,7 +459,7 @@ const Core = (() => {
     }
   }
 
-  // Redraw charts when the window width changes.
+  // Redraw charts when the window width or the theme changes.
   function onResize(fn) {
     let timer, width = window.innerWidth;
     window.addEventListener("resize", () => {
@@ -302,9 +470,11 @@ const Core = (() => {
   }
 
   return {
-    SITE_URL, COLORS, PAGES, GLOSSARY, state, term, store, getText, poss, swatch, md, parseDoc,
-    setPair, rerender, start, onResize, tourGo, getWeights, score, dcfInputs, saveDcf, resetDcf,
+    SITE_URL, COLORS, GLOSSARY, state, term, store, getText, poss, swatch, md, parseDoc, combo,
+    select, setPair, rerender, start, onResize, tourGo, getWeights, score, ratingWeights, setRatingWeights,
+    dcfInputs, saveDcf, resetDcf, watchlist, toggleWatch, ratingChange, byGroup,
     company: (t) => state.byTicker[t],
+    rating: (t) => state.ratings[t],
     peers: (group) => state.list.filter((c) => c.group === group),
   };
 })();

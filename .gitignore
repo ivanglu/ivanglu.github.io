@@ -22,3 +22,4 @@ Thumbs.db
 # FinanceIQ download cache
 financeiq/tools/.cache/
 __pycache__/
+financeiq/tools/prices/

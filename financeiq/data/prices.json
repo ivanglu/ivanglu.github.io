@@ -1,0 +1,4 @@
+{
+ "note": "No market data is connected. tools/build_prices.py replaces this file when a licensed price source is added. See docs/DATA_PROVIDER_COMPARISON.md.",
+ "series": null
+}

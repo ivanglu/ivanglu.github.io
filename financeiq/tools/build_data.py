@@ -180,6 +180,8 @@ STOCK = {  # measured on the last day of the fiscal year
 EPS_TAGS = ["EarningsPerShareDiluted"]
 SHARE_TAGS = ["WeightedAverageNumberOfDilutedSharesOutstanding"]
 ANNUAL_FORMS = ("10-K", "10-K/A")
+QUARTER_FORMS = ("10-Q", "10-Q/A", "10-K", "10-K/A")
+QUARTERS_TO_KEEP = 13   # enough for eight quarters of year-over-year growth and its acceleration
 
 # ----------------------------------------------------------------------------
 # Download (cached, rate-limited)
@@ -266,49 +268,123 @@ def pick(tag_series, end, annual_only=False):
     return None if annual_only else fallback
 
 
-def all_reports(facts, tag, unit):
-    """Return {period_end: [(filed, value), ...]} - every 10-K that reported the period."""
+def is_quarter(fact):
+    return "start" in fact and 80 <= days(fact["start"], fact["end"]) <= 100
+
+
+def all_reports(facts, tag, unit, quarterly=False):
+    """Return {period_end: [(filed, value), ...]} - every filing that reported the period.
+
+    quarterly=False: full fiscal years, from 10-K filings.
+    quarterly=True:  three-month periods, from 10-Q and 10-K filings.
+    """
     node = facts.get(tag)
     out = {}
     if not node or unit not in node["units"]:
         return out
     for f in node["units"][unit]:
-        if f.get("form") in ANNUAL_FORMS and is_full_year(f):
-            out.setdefault(f["end"], {})[f["filed"]] = f["val"]
+        if quarterly:
+            keep = f.get("form") in QUARTER_FORMS and is_quarter(f)
+        else:
+            keep = f.get("form") in ANNUAL_FORMS and is_full_year(f)
+        if keep:
+            val = f["val"]
+            if unit == "shares" and 0 < val < 1e5:
+                val *= 1e6  # a few companies report share counts in millions
+            out.setdefault(f["end"], {})[f["filed"]] = val
     return {end: sorted(v.items()) for end, v in out.items()}
+
+
+def quarter_facts(facts, tag, unit="USD"):
+    """Return {period_end: fact} for three-month periods, as first reported."""
+    node = facts.get(tag)
+    best = {}
+    if not node or unit not in node["units"]:
+        return best
+    for f in node["units"][unit]:
+        if f.get("form") in QUARTER_FORMS and is_quarter(f):
+            cur = best.get(f["end"])
+            if cur is None or f["filed"] < cur["filed"]:
+                best[f["end"]] = f
+    return best
+
+
+def year_to_date(facts, tags, end, start, unit="USD"):
+    """A cash-flow figure from the start of the fiscal year to a quarter end.
+
+    10-Q cash flow statements are cumulative: the second quarter's report covers six
+    months, the third's nine. Returns the value whose period ends on `end` and starts
+    within a week of `start`, or None.
+    """
+    for tag in tags:
+        node = facts.get(tag)
+        if not node or unit not in node["units"]:
+            continue
+        hits = [f for f in node["units"][unit]
+                if f.get("form") in QUARTER_FORMS and f.get("end") == end and "start" in f
+                and abs(days(start, f["start"])) <= 7]
+        if hits:
+            return min(hits, key=lambda f: f["filed"])["val"]
+    return None
+
+
+def shift_year(iso, years=-1):
+    d = date.fromisoformat(iso)
+    try:
+        return d.replace(year=d.year + years).isoformat()
+    except ValueError:  # 29 February
+        return d.replace(year=d.year + years, day=28).isoformat()
+
+
+def nearest(candidates, target, tolerance=10):
+    """The date in `candidates` closest to `target`, if within `tolerance` days."""
+    close = [c for c in candidates if abs(days(c, target)) <= tolerance]
+    return min(close, key=lambda c: abs(days(c, target))) if close else None
 
 
 def split_adjust(shares_reports, eps_reports):
     """Adjust share counts and EPS for stock splits, using only the filings.
 
-    When a company splits its stock, the next 10-K restates the earlier years.
-    So if two 10-Ks report the SAME fiscal year and the share count differs by a
+    When a company splits its stock, later filings restate the earlier periods.
+    So if two filings report the SAME period and the share count differs by a
     whole-number factor (2x, 3x, 10x ...), a split happened between them.
 
-    Returns (shares_by_end, eps_by_end, splits) where splits is a list of
+    Many periods show the same split, each giving a window (earlier filing date,
+    later filing date) in which it happened. Overlapping windows with the same
+    ratio are one split.
+
+    Returns (shares_by_period, eps_by_period, splits) where splits is a list of
     (filing_date_that_first_shows_the_split, ratio).
     """
-    # 1. find split ratios between consecutive filing dates
-    ratios = {}
-    for end, reports in shares_reports.items():
-        for (f1, v1), (f2, v2) in zip(reports, reports[1:]):
-            if not v1 or not v2:
-                continue
-            r = v2 / v1
-            nearest = round(r * 2) / 2  # allow 1.5-for-1 as well as whole numbers
-            if nearest >= 1.5 and abs(r - nearest) / nearest < 0.04:
-                ratios.setdefault(f2, []).append(nearest)
-    # Some companies (Alphabet) do not tag one combined share count, so also look
-    # at EPS: after a 20-for-1 split the restated EPS is 1/20 of the original.
-    for end, reports in eps_reports.items():
-        for (f1, v1), (f2, v2) in zip(reports, reports[1:]):
-            if f2 in ratios or not v1 or not v2 or v1 * v2 < 0:
-                continue
-            r = v1 / v2
-            nearest = round(r * 2) / 2
-            if nearest >= 1.5 and abs(r - nearest) / nearest < 0.04:
-                ratios.setdefault(f2, []).append(nearest)
-    splits = sorted((filed, max(set(v), key=v.count)) for filed, v in ratios.items())
+    # 1. every (window start, window end, ratio) the filings show
+    windows = []
+
+    def look(reports, invert):
+        for reps in reports.values():
+            for (f1, v1), (f2, v2) in zip(reps, reps[1:]):
+                if not v1 or not v2 or v1 * v2 < 0:
+                    continue
+                r = v1 / v2 if invert else v2 / v1
+                nearest_ratio = round(r * 2) / 2  # allow 1.5-for-1 as well as whole numbers
+                if 1.5 <= nearest_ratio <= 50 and abs(r - nearest_ratio) / nearest_ratio < 0.04:
+                    windows.append((f1, f2, nearest_ratio))
+
+    look(shares_reports, invert=False)
+    if not windows:
+        # Some companies (Alphabet) do not tag one combined share count, so also look
+        # at EPS: after a 20-for-1 split the restated EPS is 1/20 of the original.
+        look(eps_reports, invert=True)
+
+    # 2. merge overlapping windows with the same ratio into single splits
+    groups = []  # [latest window start, earliest window end, ratio]
+    for f1, f2, ratio in sorted(windows, key=lambda w: w[1]):
+        for g in groups:
+            if g[2] == ratio and f1 < g[1] and g[0] < f2:
+                g[0], g[1] = max(g[0], f1), min(g[1], f2)
+                break
+        else:
+            groups.append([f1, f2, ratio])
+    splits = sorted((hi, ratio) for lo, hi, ratio in groups)
 
     def factor_after(filed):
         f = 1.0
@@ -317,14 +393,14 @@ def split_adjust(shares_reports, eps_reports):
                 f *= ratio
         return f
 
-    # 2. take the latest-filed value for each period, then apply any later splits
+    # 3. take the latest-filed value for each period, then apply any later splits
     shares, eps = {}, {}
-    for end, reports in shares_reports.items():
+    for key, reports in shares_reports.items():
         filed, val = reports[-1]
-        shares[end] = val * factor_after(filed)
-    for end, reports in eps_reports.items():
+        shares[key] = val * factor_after(filed)
+    for key, reports in eps_reports.items():
         filed, val = reports[-1]
-        eps[end] = round(val / factor_after(filed), 4)
+        eps[key] = round(val / factor_after(filed), 4)
     return shares, eps, splits
 
 
@@ -422,11 +498,15 @@ def build(ticker, cik, name, group, blurb, refresh=False):
         f = pick(series[key], end, annual_only=True)
         return f["val"] if f else None
 
+    # Per-share data, annual and quarterly together, so that a split is detected from
+    # whichever filing shows it first. Quarterly periods get a ("q", end) key.
     shares_reports, eps_reports = {}, {}
     for t in SHARE_TAGS:
         shares_reports = shares_reports or all_reports(facts, t, "shares")
+        shares_reports.update({("q", k): v for k, v in all_reports(facts, t, "shares", quarterly=True).items()})
     for t in EPS_TAGS:
         eps_reports = eps_reports or all_reports(facts, t, "USD/shares")
+        eps_reports.update({("q", k): v for k, v in all_reports(facts, t, "USD/shares", quarterly=True).items()})
     shares, eps, splits = split_adjust(shares_reports, eps_reports)
 
     # Fiscal years = period ends that have a full-year revenue figure AND a balance sheet.
@@ -534,6 +614,8 @@ def build(ticker, cik, name, group, blurb, refresh=False):
     for y in years:
         dedup[y["fy"]] = y
     years = [dedup[k] for k in sorted(dedup)][-YEARS_TO_KEEP:]
+
+    quarters, latest = build_quarters(facts, series, fact, get, years, shares, eps, cik)
     return {
         "ticker": ticker,
         "name": name,
@@ -546,7 +628,102 @@ def build(ticker, cik, name, group, blurb, refresh=False):
                    if years and filed > years[0]["filed"]],
         "warnings": quality_checks(years),
         "years": years,
+        "quarters": quarters,
+        "latest": latest,
     }
+
+
+QUARTER_ITEMS = ["revenue", "grossProfit", "operatingIncome", "netIncome"]
+
+
+def build_quarters(facts, series, fact, get, years, shares, eps, cik):
+    """Quarterly income-statement figures and the latest balance sheet.
+
+    Three quarters of each year come straight from 10-Q filings. Companies do not file
+    a 10-Q for the fourth quarter, so Q4 = full year - the first three quarters.
+    Returns (quarters, latest).
+    """
+    q = {key: [quarter_facts(facts, t) for t in FLOW[key]] for key in QUARTER_ITEMS + ["costOfRevenue"]}
+
+    def qfact(key, end):
+        for by_end in q[key]:
+            if end in by_end:
+                return by_end[end]
+        return None
+
+    def qval(key, end):
+        f = qfact(key, end)
+        if f:
+            return f["val"]
+        if key == "grossProfit" and qfact("revenue", end) and qfact("costOfRevenue", end):
+            return qfact("revenue", end)["val"] - qfact("costOfRevenue", end)["val"]
+        return None
+
+    rows = {}
+    for by_end in q["revenue"]:
+        for end, f in by_end.items():
+            rows.setdefault(end, {"end": end, "filed": f["filed"], "form": f["form"], "accn": f["accn"], "q4Derived": False})
+    for end, row in rows.items():
+        for key in QUARTER_ITEMS:
+            row[key] = qval(key, end)
+        row["eps"] = eps.get(("q", end))
+        row["dilutedShares"] = shares.get(("q", end))
+        if row["dilutedShares"] is not None and row["dilutedShares"] < 1e5:
+            row["dilutedShares"] *= 1e6
+
+    # fourth quarters
+    for y in years:
+        annual = fact("revenue", y["end"])
+        if annual is None or y["end"] in rows:
+            continue
+        inside = sorted(e for e in rows if annual["start"] < e < y["end"] and days(e, y["end"]) > 60)
+        if len(inside) != 3:
+            continue
+        row = {"end": y["end"], "filed": y["filed"], "form": "10-K", "accn": y["accn"], "q4Derived": True}
+        for key in QUARTER_ITEMS + ["eps"]:
+            parts = [rows[e][key] for e in inside]
+            row[key] = None if y[key] is None or None in parts else round(y[key] - sum(parts), 4)
+        row["dilutedShares"] = None
+        rows[y["end"]] = row
+
+    quarters = [rows[e] for e in sorted(rows)][-QUARTERS_TO_KEEP:]
+    for a, b in zip(quarters, quarters[1:]):  # keep only an unbroken run of quarters
+        # 12- and 16-week fiscal quarters (Costco, PepsiCo) are 84 to 119 days long
+        if not 70 <= days(a["end"], b["end"]) <= 130:
+            quarters = quarters[quarters.index(b):]
+
+    # ---- latest balance sheet and trailing-twelve-month cash flow
+    fy = years[-1]
+    last_end = quarters[-1]["end"] if quarters and quarters[-1]["end"] > fy["end"] else fy["end"]
+    latest = {"end": last_end, "filed": quarters[-1]["filed"] if quarters and last_end != fy["end"] else fy["filed"],
+              "fiscalYearEnd": fy["end"]}
+    if last_end == fy["end"]:
+        latest.update({k: fy[k] for k in ("debt", "cash", "equity", "assets", "liabilities")})
+        latest["ttmOperatingCashFlow"], latest["ttmCapex"] = fy["operatingCashFlow"], fy["capex"]
+    else:
+        debt, _ = total_debt(get, last_end)
+        cash = get("cashAndShortTerm", last_end)
+        if cash is None and get("cashOnly", last_end) is not None:
+            cash = get("cashOnly", last_end) + (get("shortTermInvestments", last_end) or 0)
+        liabilities, equity = get("liabilities", last_end), get("equity", last_end)
+        if liabilities is None and equity is not None and get("assets", last_end) is not None:
+            liabilities = (get("liabilitiesAndEquity", last_end) or get("assets", last_end)) - equity
+        latest.update({"debt": debt if debt is not None else 0, "cash": cash, "equity": equity,
+                       "assets": get("assets", last_end), "liabilities": liabilities})
+        # TTM = last full year + this year so far - the same months of last year
+        fy_start = fact("revenue", fy["end"])["start"]
+        prev_end = nearest([r["end"] for r in quarters], shift_year(last_end))
+        for key, name in (("operatingCashFlow", "ttmOperatingCashFlow"), ("capex", "ttmCapex")):
+            now = year_to_date(facts, FLOW[key], last_end, date.fromisoformat(fy["end"]).isoformat())
+            if now is None:  # fiscal year starts the day after the previous one ended
+                nxt = date.fromordinal(date.fromisoformat(fy["end"]).toordinal() + 1).isoformat()
+                now = year_to_date(facts, FLOW[key], last_end, nxt)
+            before = year_to_date(facts, FLOW[key], prev_end, fy_start) if prev_end else None
+            latest[name] = fy[key] + now - before if None not in (fy[key], now, before) else None
+    with_shares = [r for r in quarters if r["dilutedShares"]]
+    latest["dilutedShares"] = (with_shares[-1]["dilutedShares"] if with_shares and with_shares[-1]["end"] > fy["end"]
+                               else fy["dilutedShares"])
+    return quarters, latest
 
 
 LINE_ITEMS = ["revenue", "grossProfit", "operatingIncome", "pretaxIncome", "incomeTax", "netIncome",
@@ -581,15 +758,17 @@ def main(argv):
         last = c["years"][-1]
         missing = [k for k in LINE_ITEMS if last[k] is None]
         split_txt = " ".join(f"{s['ratio']:g}:1" for s in c["splits"])
+        qs = c["quarters"]
         print(f"{ticker:6} FY{c['years'][0]['fy']}-{last['fy']}  rev ${last['revenue'] / 1e9:8,.1f}B  "
-              f"eps {last['eps']}  splits[{split_txt}]  missing{missing}  warnings={len(c['warnings'])}")
+              f"eps {last['eps']}  splits[{split_txt}]  missing{missing}  warnings={len(c['warnings'])}  "
+              f"quarters={len(qs)} to {qs[-1]['end'] if qs else 'none'}")
 
     companies = [bundle[t] for t in COMPANIES if t in bundle]
     out_path.write_text(json.dumps({
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "source": "SEC EDGAR XBRL company facts API (data.sec.gov), annual Form 10-K filings",
         "currency": "USD",
-        "period": "annual (fiscal year)",
+        "period": "annual (fiscal year) and quarterly",
         "companies": companies,
     }, separators=(",", ":")))
     print(f"\nWrote {len(companies)} companies to {out_path} ({out_path.stat().st_size / 1024:.0f} KB)")

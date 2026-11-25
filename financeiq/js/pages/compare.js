@@ -130,7 +130,29 @@
     render(A, B) {
       pair = [A, B];
       const s = Core.state.summaries;
+      const ra = Core.rating(A.ticker), rb = Core.rating(B.ticker);
+      const gradeRow = (label, x, y) => `<tr><td>${label}</td><td><span class="fq-gcell">${Views.scoreText(x.score !== undefined ? x.score : x.overall)}${Views.gradeBox(x.grade, "sm")}</span></td><td><span class="fq-gcell">${Views.scoreText(y.score !== undefined ? y.score : y.overall)}${Views.gradeBox(y.grade, "sm")}</span></td></tr>`;
       $("#app").innerHTML = `
+        <section class="fq-section" id="ratings">
+          <h2>Stock ratings</h2>
+          <p class="fq-sub">Each company graded on the same five categories. Open a company's page for every measure behind a grade.</p>
+          <div class="fq-card"><div class="fq-tablewrap"><table class="fq-table">
+            <thead><tr><th>Category</th><th><span class="fq-th">${swatch(0)}<a href="company.html#${A.ticker}">${esc(A.name)}</a></span></th><th><span class="fq-th">${swatch(1)}<a href="company.html#${B.ticker}">${esc(B.name)}</a></span></th></tr></thead>
+            <tbody>${ra.categories.map((k, i) => gradeRow(`${esc(k.label)} <span class="fq-muted">· ${k.weight.toFixed(0)}%</span>`, k, rb.categories[i])).join("")}
+              <tr class="fq-strong">${gradeRow(ra.complete && rb.complete ? "Overall rating" : "Partial rating", ra, rb).slice(4, -5)}</tr></tbody>
+          </table></div>
+          ${ra.complete && rb.complete ? "" : `<p class="fq-small fq-muted" style="margin:10px 0 0">Partial: ${esc(ra.missing.join(" and "))} need market data, which is not connected.</p>`}</div>
+        </section>
+        <section class="fq-section" id="health">
+          <h2>Financial Health Score</h2>
+          <p class="fq-sub">A separate view of the business alone, on fixed scales. <a data-nav="health.html" href="health.html#${A.ticker}-${B.ticker}">See the breakdown and change the weights</a>.</p>
+          <div class="fq-two">${Views.healthCard(A, 0, Core.score(A))}${Views.healthCard(B, 1, Core.score(B))}</div>
+        </section>
+        <section class="fq-section fq-scorecard" id="scorecard">
+          <h2>Scorecard</h2>
+          <p class="fq-sub">The headline numbers from each company's latest annual report. A check mark shows which company is ahead on that measure.</p>
+          <div class="fq-card">${Views.scorecard(A, B)}</div>
+        </section>
         <section class="fq-section" id="charts">
           <h2>The four tests</h2>
           <p class="fq-sub">Ten years of history. Move your pointer over a chart to read exact values, and use the buttons to switch measures.</p>

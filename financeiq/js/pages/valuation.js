@@ -64,6 +64,21 @@
         ${num("price", "Share price today ($, optional)", input.price || "", 0.01, "Type it in. FinanceIQ has no price feed.")}
         <label class="fq-field"><span>Projection period: <b id="years-out">${input.years}</b> years</span><input type="range" data-in="years" min="5" max="10" step="1" value="${input.years}"><small>5 to 10 years, then the terminal value takes over.</small></label>
       </div>
+      <div class="fq-toolbar" style="margin:16px 0 0">
+        <label><input type="checkbox" data-in="fade" ${input.fade ? "checked" : ""}> Fade growth to the terminal rate over the projection (multi-stage)</label>
+        ${Calc.isNum(input.fcf0Average3) ? `<button type="button" class="fq-btn" id="avg3">Start from the 3-year average (${money(input.fcf0Average3)})</button>` : ""}
+      </div>
+      <details class="fq-factors" style="margin-top:14px"><summary>Discount rate helper <span>estimate a weighted average cost of capital</span></summary><div>
+        <p class="fq-panel__what">${term("wacc", "WACC")} = share of equity × cost of equity + share of debt × cost of debt × (1 − tax rate), where cost of equity = risk-free rate + beta × equity risk premium.
+          The four rates below are yours to choose: FinanceIQ has no interest-rate or beta data. Debt and tax rate come from the filings; equity value needs a share price.</p>
+        <div class="fq-inputs" id="wacc">
+          <label class="fq-field"><span>Risk-free rate (%)</span><input type="number" data-w="riskFree" value="4" step="0.1"></label>
+          <label class="fq-field"><span>Beta</span><input type="number" data-w="beta" value="1" step="0.05"></label>
+          <label class="fq-field"><span>Equity risk premium (%)</span><input type="number" data-w="equityPremium" value="5" step="0.1"></label>
+          <label class="fq-field"><span>Cost of debt, before tax (%)</span><input type="number" data-w="costOfDebt" value="5" step="0.1"></label>
+        </div>
+        <p id="wacc-out" class="fq-note"></p>
+      </div></details>
       <div class="fq-panel__head" style="margin-top:22px"><h3 style="font-size:16px">Scenario</h3>
         <div class="fq-seg" role="group" aria-label="Scenario to edit">${Views.SCENARIOS.map(([id, label]) => `<button type="button" data-scenario="${id}" aria-pressed="${id === scenario}">${label}</button>`).join("")}</div>
       </div>
@@ -92,7 +107,7 @@
     const s = input.scenarios[scenario];
     const rates = [-2, -1, 0, 1, 2].map((d) => +(s.discount + d / 100).toFixed(4)).filter((r) => r > 0);
     const growths = [1, 0.5, 0, -0.5, -1].map((d) => +(s.terminalGrowth + d / 100).toFixed(4)).filter((g) => g >= 0);
-    const grid = Calc.sensitivity({ fcf0: input.fcf0, years: input.years, cash: input.cash, debt: input.debt, shares: input.shares, growth: s.growth }, rates, growths);
+    const grid = Calc.sensitivity({ fcf0: input.fcf0, years: input.years, cash: input.cash, debt: input.debt, shares: input.shares, growth: s.growth, fade: input.fade }, rates, growths);
     const flat = grid.flat().filter(isNum);
     const lo = Math.min(...flat), hi = Math.max(...flat);
     const rows = growths.map((g, gi) => `<tr><th>${pct(g, 2)}</th>${rates.map((r, ri) => {
@@ -144,6 +159,8 @@
             <tr class="fq-strong"><td>Value per share</td><td></td><td></td><td>${fmt(res.perShare, "perShare")}</td></tr>
           </tbody>
         </table></div>
+        ${(() => { if (!price) return ""; const rv = Calc.reverseDcf({ fcf0: input.fcf0, years: input.years, cash: input.cash, debt: input.debt, shares: input.shares, fade: input.fade, discount: input.scenarios[scenario].discount, terminalGrowth: input.scenarios[scenario].terminalGrowth }, price);
+          return !rv ? "" : `<p class="fq-note"><strong>Reverse DCF.</strong> ${rv.bounded ? `No growth rate between −50% and +100% makes this model match ${fmt(price, "perShare")}.` : `To be worth exactly the ${fmt(price, "perShare")} you entered, free cash flow would have to ${input.fade ? "start growing at" : "grow"} about <strong>${pct(rv.growth)}</strong> a year for ${input.years} years, keeping this scenario's discount rate and terminal growth. Compare that with what the company has actually achieved.`}</p>`; })()}
         <p class="fq-note"><strong>${pct(res.terminalShare, 0)} of the enterprise value comes from the terminal value</strong>, the part of the model that covers every year after year ${input.years}.
           That is normal for a DCF, and it is the main reason small changes in the discount rate or terminal growth move the answer so much.</p>
       </div>`;
@@ -166,6 +183,7 @@
         <p><strong>What the model leaves out.</strong> It uses one constant growth rate, ignores stock-based pay and leases, and uses an illustrative discount rate instead of one estimated for each company. It is a learning tool for seeing how valuation works, not advice to buy or sell.</p>
       </section>`;
     $("#val-out").innerHTML = html;
+    waccUpdate();
   }
 
   function draw() {
@@ -182,12 +200,26 @@
     output();
   }
 
+  const save = (c, input) => Core.saveDcf(c, { fcf0: input.fcf0, cash: input.cash, debt: input.debt, shares: input.shares, price: input.price || null, years: input.years, fade: Boolean(input.fade), scenarios: input.scenarios });
+
+  // The discount-rate helper: recalculated on every keystroke, applied only when the button is pressed.
+  function waccUpdate() {
+    const box = $("#wacc-out"); if (!box) return;
+    const c = company(), input = Core.dcfInputs(c), g = (k) => Number($(`[data-w="${k}"]`).value);
+    const equityValue = input.price > 0 ? input.price * input.shares : null;
+    const w = Calc.wacc({ riskFree: g("riskFree") / 100, beta: g("beta"), equityPremium: g("equityPremium") / 100, costOfDebt: g("costOfDebt") / 100, taxRate: c.L.taxRate, equityValue, debtValue: input.debt });
+    box.innerHTML = !equityValue ? "Enter a share price above first: the weights of debt and equity depend on the market value of the equity."
+      : !w ? "Fill in all four boxes with numbers."
+      : `Cost of equity ${pct(w.costOfEquity)}. Equity ${money(equityValue)}, debt ${money(input.debt)}, tax rate ${pct(c.L.taxRate)}. <strong>WACC ${pct(w.wacc, 2)}</strong>. <button type="button" class="fq-btn" id="use-wacc" data-v="${(w.wacc * 100).toFixed(2)}">Use as the ${scenario} case discount rate</button>`;
+  }
+
   // Read every input, save, and recalculate.
   function onInput(e) {
     const c = company(), input = Core.dcfInputs(c), t = e.target;
     if (t.dataset.in) {
       const v = Number(t.value), id = t.dataset.in;
-      if (id === "years") { input.years = v; $("#years-out").textContent = v; }
+      if (id === "fade") input.fade = t.checked;
+      else if (id === "years") { input.years = v; $("#years-out").textContent = v; }
       else if (id === "price") input.price = t.value === "" ? null : v;
       else if (id === "shares") input.shares = v * 1e6;
       else input[id] = t.value === "" ? NaN : v * 1e9;
@@ -197,7 +229,7 @@
       // keep the slider and the number box showing the same value
       $$(`[data-rate="${t.dataset.rate}"]`).forEach((el) => { if (el !== t) el.value = t.value; });
     } else return;
-    Core.saveDcf(c, { fcf0: input.fcf0, cash: input.cash, debt: input.debt, shares: input.shares, price: input.price || null, years: input.years, scenarios: input.scenarios });
+    save(c, input);
     output();
   }
 
@@ -207,11 +239,13 @@
     render(A, B) { pair = [A, B]; pair.forEach((c, i) => { c._slot = i; }); draw(); },
   });
 
-  document.addEventListener("input", onInput);
+  document.addEventListener("input", (e) => { if (e.target.dataset && e.target.dataset.w) waccUpdate(); else { onInput(e); waccUpdate(); } });
   document.addEventListener("click", (e) => {
     const s = e.target.closest("[data-slot]"), sc = e.target.closest("[data-scenario]");
     if (s) { slot = Number(s.dataset.slot); draw(); }
     else if (sc) { scenario = sc.dataset.scenario; draw(); }
     else if (e.target.closest("#reset")) { Core.resetDcf(company()); draw(); }
+    else if (e.target.closest("#avg3")) { const c = company(), i = Core.dcfInputs(c); i.fcf0 = i.fcf0Average3; save(c, i); draw(); }
+    else if (e.target.closest("#use-wacc")) { const c = company(), i = Core.dcfInputs(c); i.scenarios[scenario].discount = Number(e.target.closest("#use-wacc").dataset.v) / 100; save(c, i); draw(); }
   });
 })();

@@ -117,7 +117,106 @@ const Calc = (() => {
     const recent = ys.slice(-5).map((y) => y.freeCashFlow).filter(isNum);
     company.fcfYears = recent.length;
     company.fcfPositiveShare = recent.length ? recent.filter((v) => v > 0).length / recent.length : null;
+    deriveQuarters(company);
     return company;
+  }
+
+  // Quarterly growth, trailing-twelve-month (TTM) totals and acceleration.
+  // "Year over year" always compares a quarter with the same quarter one year earlier,
+  // which removes seasonality (a retailer's holiday quarter is compared with a holiday quarter).
+  function deriveQuarters(company) {
+    const qs = company.quarters || [];
+    const sum4 = (i, key) => {
+      if (i < 3) return null;
+      const vals = [qs[i], qs[i - 1], qs[i - 2], qs[i - 3]].map((q) => q[key]);
+      return vals.every(isNum) ? vals.reduce((a, b) => a + b, 0) : null;
+    };
+    qs.forEach((q, i) => {
+      const y = qs[i - 4] || {};                      // same quarter, one year earlier
+      q.opMargin = div(q.operatingIncome, q.revenue);
+      q.netMargin = div(q.netIncome, q.revenue);
+      q.revenueGrowth = growth(y.revenue, q.revenue);
+      q.epsGrowth = growth(y.eps, q.eps);             // null when last year's EPS was zero or negative
+      q.opIncomeGrowth = growth(y.operatingIncome, q.operatingIncome);
+      q.netIncomeGrowth = growth(y.netIncome, q.netIncome);
+      q.epsUp = isNum(q.eps) && isNum(y.eps) ? q.eps > y.eps : null;   // works for losses too
+      const yMargin = div(y.operatingIncome, y.revenue), yNet = div(y.netIncome, y.revenue);
+      q.opMarginChange = isNum(q.opMargin) && isNum(yMargin) ? q.opMargin - yMargin
+        : isNum(q.netMargin) && isNum(yNet) ? q.netMargin - yNet : null;
+      q.ttmRevenue = sum4(i, "revenue"); q.ttmNetIncome = sum4(i, "netIncome");
+      q.ttmEps = sum4(i, "eps"); q.ttmOpIncome = sum4(i, "operatingIncome"); q.ttmGrossProfit = sum4(i, "grossProfit");
+    });
+    qs.forEach((q, i) => {
+      const y = qs[i - 4] || {};
+      q.ttmRevenueGrowth = growth(y.ttmRevenue, q.ttmRevenue);
+      q.ttmEpsGrowth = growth(y.ttmEps, q.ttmEps);
+      q.ttmOpIncomeGrowth = growth(y.ttmOpIncome, q.ttmOpIncome);
+      q.ttmOpMarginChange = isNum(q.ttmOpIncome) && isNum(y.ttmOpIncome) && q.ttmRevenue > 0 && y.ttmRevenue > 0
+        ? q.ttmOpIncome / q.ttmRevenue - y.ttmOpIncome / y.ttmRevenue : null;
+    });
+    const Q = qs[qs.length - 1] || {}, P = qs[qs.length - 2] || {};
+    // Acceleration: how much the growth RATE changed from the previous quarter, in percentage points.
+    const accel = (key) => (isNum(Q[key]) && isNum(P[key]) ? Q[key] - P[key] : null);
+    const last4 = qs.slice(-4).map((q) => q.opMarginChange).filter(isNum);
+    const last8 = qs.slice(-8).map((q) => q.epsUp).filter((v) => v !== null);
+    const L = company.latest || {};
+    const ttmFcf = isNum(L.ttmOperatingCashFlow) && isNum(L.ttmCapex) ? L.ttmOperatingCashFlow - L.ttmCapex : null;
+    company.Q = Q;
+    company.ttm = {
+      asOf: Q.end || null, revenue: Q.ttmRevenue, netIncome: Q.ttmNetIncome, eps: Q.ttmEps, opIncome: Q.ttmOpIncome,
+      grossProfit: Q.ttmGrossProfit, operatingCashFlow: L.ttmOperatingCashFlow, capex: L.ttmCapex, freeCashFlow: ttmFcf,
+      revenueGrowth: Q.ttmRevenueGrowth, epsGrowth: Q.ttmEpsGrowth, opIncomeGrowth: Q.ttmOpIncomeGrowth,
+      opMargin: div(Q.ttmOpIncome, Q.ttmRevenue), opMarginChange: Q.ttmOpMarginChange,
+    };
+    company.momentum = {
+      epsAccel: accel("epsGrowth"), revenueAccel: accel("revenueGrowth"), opIncomeAccel: accel("opIncomeGrowth"),
+      ttmEpsAccel: accel("ttmEpsGrowth"),
+      improvingQuarters: last4.length === 4 ? last4.filter((v) => v > 0).length / 4 : null,
+      epsUpShare: last8.length >= 6 ? last8.filter(Boolean).length / last8.length : null,
+      epsUpCount: last8.filter(Boolean).length, epsUpOf: last8.length,
+    };
+    // Extra quality measures
+    const y = company.L, p = yearBack(company, 1) || {}, y3 = yearBack(company, 3);
+    const avgAssets = avg(y.assets, p.assets);
+    // Accruals: profit that did not arrive as cash, relative to assets. Lower is better.
+    company.accruals = isNum(y.netIncome) && isNum(y.operatingCashFlow) && avgAssets > 0 ? (y.netIncome - y.operatingCashFlow) / avgAssets : null;
+    company.cashConversion = y.netIncome > 0 ? div(y.operatingCashFlow, y.netIncome) : null;
+    // Yearly change in the share count over three years. Negative = buybacks, positive = dilution.
+    company.dilution = y3 ? cagr(y3.dilutedShares, y.dilutedShares, 3) : null;
+    const margins = company.years.slice(-5).map((v) => v.opMargin).filter(isNum);
+    const mean = margins.reduce((a, b) => a + b, 0) / (margins.length || 1);
+    company.marginVolatility = margins.length >= 4 ? Math.sqrt(margins.reduce((a, b) => a + (b - mean) ** 2, 0) / margins.length) : null;
+    company.ocfGrowth = growth(p.operatingCashFlow, y.operatingCashFlow);
+    company.fcfGrowth = growth(p.freeCashFlow, y.freeCashFlow);
+    company.cagr5 = cagrOf(company, "revenue", 5);
+    const growths = company.years.slice(-5).map((v) => v.growth).filter(isNum);
+    company.growthYears = growths.length >= 4 ? growths.filter((g) => g > 0).length / growths.length : null;
+  }
+
+  /* ---------------- valuation multiples ---------------- */
+
+  // Market-based ratios for one company at a given share price.
+  // Uses the latest quarter's share count and balance sheet, and trailing-twelve-month results.
+  function valuation(company, price) {
+    const L = company.latest || {}, t = company.ttm || {};
+    if (!(price > 0) || !(L.dilutedShares > 0)) return null;
+    const marketCap = price * L.dilutedShares;
+    const ev = isNum(L.debt) && isNum(L.cash) ? marketCap + L.debt - L.cash : null;   // enterprise value
+    // EBITDA: TTM operating income + the latest full year's depreciation (quarterly D&A is not collected)
+    const ebitda = isNum(t.opIncome) && isNum(company.L.depreciation) ? t.opIncome + company.L.depreciation : null;
+    const pe = t.eps > 0 ? price / t.eps : null;              // not meaningful when earnings are negative
+    const g = company.epsCagr3;
+    return {
+      price, marketCap, enterpriseValue: ev, pe,
+      earningsYield: div(t.eps, price),                        // defined even for losses (then negative)
+      priceToSales: t.revenue > 0 ? marketCap / t.revenue : null,
+      priceToBook: L.equity > 0 ? marketCap / L.equity : null, // not meaningful with negative equity
+      evToEbitda: isNum(ev) && ebitda > 0 ? ev / ebitda : null,
+      evToRevenue: isNum(ev) && t.revenue > 0 ? ev / t.revenue : null,
+      ebitdaYield: isNum(ev) && ev > 0 ? div(ebitda, ev) : null,
+      fcfYield: div(t.freeCashFlow, marketCap),
+      peg: isNum(pe) && g > 0 ? pe / (g * 100) : null,         // only when both earnings and growth are positive
+    };
   }
 
   // The year `back` fiscal years before the latest one (null if not available).
@@ -357,9 +456,12 @@ const Calc = (() => {
     const rows = [];
     let sumPv = 0, fcf = a.fcf0;
     for (let t = 1; t <= a.years; t++) {
-      fcf *= 1 + a.growth;
+      // With `fade`, growth slides in equal steps from the starting rate in year 1
+      // to the terminal rate in the final year, instead of stopping abruptly.
+      const g = a.fade && a.years > 1 ? a.growth + (a.terminalGrowth - a.growth) * ((t - 1) / (a.years - 1)) : a.growth;
+      fcf *= 1 + g;
       const factor = 1 / Math.pow(1 + a.discount, t);   // what $1 received in year t is worth today
-      rows.push({ year: t, fcf, factor, pv: fcf * factor });
+      rows.push({ year: t, fcf, factor, pv: fcf * factor, growth: g });
       sumPv += fcf * factor;
     }
     // Gordon growth formula: value at the end of the projection of all cash flows after it
@@ -383,6 +485,35 @@ const Calc = (() => {
     }));
   }
 
+  // Reverse DCF: which growth rate would make the model's value equal the market price?
+  // Everything else (discount rate, terminal growth, years) is held at the given assumptions.
+  // Solved by bisection: value per share rises steadily with growth, so halve the range 60 times.
+  function reverseDcf(assumptions, price) {
+    if (!(price > 0) || !(assumptions.fcf0 > 0)) return null;
+    const value = (g) => { const r = dcf({ ...assumptions, growth: g }); return r.valid ? r.perShare : null; };
+    let lo = -0.5, hi = 1.0;
+    const vLo = value(lo), vHi = value(hi);
+    if (!isNum(vLo) || !isNum(vHi)) return null;
+    if (price <= vLo) return { growth: lo, bounded: "below" };     // even -50% a year is worth more than the price
+    if (price >= vHi) return { growth: hi, bounded: "above" };     // even +100% a year is worth less than the price
+    for (let i = 0; i < 60; i++) {
+      const mid = (lo + hi) / 2;
+      if (value(mid) < price) lo = mid; else hi = mid;
+    }
+    return { growth: (lo + hi) / 2, bounded: null };
+  }
+
+  // Weighted average cost of capital, from the standard textbook pieces.
+  //   costOfEquity = riskFree + beta x equityPremium       (capital asset pricing model)
+  //   wacc = E/(D+E) x costOfEquity + D/(D+E) x costOfDebt x (1 - taxRate)
+  function wacc({ riskFree, beta, equityPremium, costOfDebt, taxRate, equityValue, debtValue }) {
+    const all = [riskFree, beta, equityPremium, costOfDebt, taxRate, equityValue, debtValue];
+    if (!all.every(isNum) || equityValue < 0 || debtValue < 0 || equityValue + debtValue <= 0) return null;
+    const costOfEquity = riskFree + beta * equityPremium;
+    const total = equityValue + debtValue;
+    return { costOfEquity, wacc: (equityValue / total) * costOfEquity + (debtValue / total) * costOfDebt * (1 - taxRate) };
+  }
+
   // Upside (+) or downside (-) of the estimate compared with a market price.
   const upside = (perShare, price) => (isNum(perShare) && price > 0 ? perShare / price - 1 : null);
 
@@ -392,8 +523,11 @@ const Calc = (() => {
     const usesFcff = isNum(L.fcff);
     const base = isNum(company.cagr3) ? clamp(company.cagr3, 0.02, 0.12) : 0.04;
     const round = (v) => Math.round(v * 1000) / 1000;
+    // A smoother starting point: the average of the last three years, for companies whose cash flow swings.
+    const last3 = company.years.slice(-3).map((y) => (usesFcff ? y.fcff : y.freeCashFlow)).filter(isNum);
     return {
-      fcf0: usesFcff ? L.fcff : L.freeCashFlow, usesFcff,
+      fcf0: usesFcff ? L.fcff : L.freeCashFlow, usesFcff, fade: false,
+      fcf0Average3: last3.length === 3 ? last3.reduce((a, b) => a + b, 0) / 3 : null,
       years: 5, cash: L.cash, debt: L.debt, shares: L.dilutedShares,
       scenarios: {
         bear: { growth: round(Math.max(0, base - 0.04)), discount: 0.105, terminalGrowth: 0.02 },
@@ -404,6 +538,16 @@ const Calc = (() => {
   }
 
   /* ---------------- 5. peer statistics ---------------- */
+
+  // Percentile rank of `value` within `values` (0 = worst, 100 = best).
+  // Ties share the middle of their range. Returns null for small samples.
+  function percentile(value, values, higherIsBetter = true, minSample = 10) {
+    const v = values.filter(isNum);
+    if (!isNum(value) || v.length < minSample) return null;
+    const below = v.filter((x) => (higherIsBetter ? x < value : x > value)).length;
+    const equal = v.filter((x) => x === value).length;
+    return ((below + 0.5 * equal) / v.length) * 100;
+  }
 
   // Where one company stands among its peers. Rank 1 is best.
   function peerStats(value, peerValues, higherIsBetter = true) {
@@ -450,7 +594,7 @@ const Calc = (() => {
   return {
     isNum, div, clamp, avg, growth, cagr, median, derive, yearBack, cagrOf,
     scale, SCORE_MODEL, PRESETS, normalizeWeights, scoreCompany, band, highlights,
-    dcf, sensitivity, upside, dcfDefaults, peerStats,
+    dcf, sensitivity, upside, dcfDefaults, reverseDcf, wacc, valuation, deriveQuarters, percentile, peerStats,
     money, pct, ratio, perShare, shares, fmt, STATUTORY_TAX_RATE,
   };
 })();

@@ -32,13 +32,23 @@ financeiq/
   report.html           Printable report    js/pages/report.js
   financeiq.css         All styles, including the print layout
 
-  js/calc.js            Every formula. No browser code.
+  company.html          One company            js/pages/company.js
+  screener.html         Screener               js/pages/screener.js
+  watchlist.html        Watchlist              js/pages/watchlist.js
+  (index.html is the dashboard: js/pages/dashboard.js)
+
+  js/calc.js            Every financial formula, quarterly/TTM, DCF, valuation. No browser code.
+  js/quant.js           Price and volume indicators. No browser code.
+  js/ratings.js         The five-category stock rating. No browser code.
+  js/screen.js          Screener rows, filters, sorting, CSV, search ranking. No browser code.
   js/chart.js           The line chart.
   js/core.js            Data loading, navigation, company picker, glossary, saved settings, tour.
   js/views.js           HTML pieces used by more than one page.
 
   data/financials.json  Built by tools/build_data.py. Do not edit by hand.
   data/summaries.json   AI-written strengths and risks.
+  data/ratings-history.json  Dated rating snapshots. Appended by tools/snapshot_ratings.py.
+  data/prices.json      Market data. Empty unless tools/build_prices.py is given licensed files.
 
   research/*.txt        Ivan's case-study text.        ← Ivan edits these
   about.txt             Ivan's About-page text.        ← Ivan edits this
@@ -47,6 +57,9 @@ financeiq/
   tools/test_build_data.py   Its tests.
   tools/validate_filings.py  Checks stored figures against the filings.
   tools/crosscheck.py        Recalculates ratios independently in Python.
+  tools/crosscheck_quant.py  Recalculates market indicators independently in Python.
+  tools/snapshot_ratings.py  Saves a dated snapshot of every rating.
+  tools/build_prices.py      Converts licensed price files into data/prices.json.
   tools/check_summaries.py   Checks every figure quoted in the AI summaries.
 
   tests/tests.js        Tests for calc.js.     tests/index.html shows them in a browser.
@@ -136,3 +149,24 @@ all read that list, so they update themselves. Update the "19 measures" count in
 ## Deployment
 
 GitHub Pages serves the `main` branch of the repository. Publishing is a `git push` to `main`. See the README.
+
+## Version 3 notes
+
+**Three ways in.** `Core.start({ mode })` takes `"single"` (address `#NVDA`, the company page), `"pair"`
+(`#NVDA-MSFT`, the comparison pages) or `"none"` (dashboard, screener, watchlist). Opening a pair page with a
+single ticker picks a peer as the second company.
+
+**Ratings are calculated in the browser** on every page load, from `financials.json` and, if present,
+`prices.json`. Nothing about a rating is stored except the dated snapshots used to show changes.
+
+**Market data is optional by design.** `prices.json` ships with `"series": null`. Every page checks for it and
+degrades to "not available" with an explanation. Adding licensed data needs no code change.
+
+**Search** is one component (`Core.combo`) used in the top bar, on the dashboard, in both comparison pickers
+and for "Compare with". Ranking is in `Screen.search` and is unit-tested.
+
+**Everything personal stays in the browser:** watchlist, recent companies, weights, saved screen, DCF
+assumptions, typed prices, theme.
+
+**Scheduled refresh.** `docs/github-workflow.example.yml` is a ready-made GitHub Actions workflow. It is an
+example, not active: copy it to `.github/workflows/` to turn it on.

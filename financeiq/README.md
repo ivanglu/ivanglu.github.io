@@ -4,6 +4,8 @@ A financial research tool for comparing public companies, built on the annual re
 
 Live: https://ivanglushchenko.com/financeiq/
 
+- **Stock rating:** five graded categories with every measure shown. Three are live; two wait for licensed price data.
+- **Company pages, screener, watchlist and search** across 38 companies.
 - **Financial Health Score:** 0–100, from 19 measures in five categories, with adjustable weights.
 - **DCF valuation simulator:** three scenarios and a sensitivity table.
 - **Historical trends** and **industry benchmarks** for 38 companies.
@@ -21,6 +23,11 @@ Plain HTML, CSS and JavaScript with a Python data script. No framework, no depen
 | [docs/FINANCIAL_METHODOLOGY.md](docs/FINANCIAL_METHODOLOGY.md) | Every formula, the scoring rules, the DCF model |
 | [docs/FINANCIAL_VALIDATION.md](docs/FINANCIAL_VALIDATION.md) | What was tested, the results, and what is not verified |
 | [docs/INTERVIEW_PREPARATION.md](docs/INTERVIEW_PREPARATION.md) | Explanations, questions and exercises for Ivan |
+| [docs/STOCK_RATING_METHODOLOGY.md](docs/STOCK_RATING_METHODOLOGY.md) | The five-category rating: measures, scales, coverage rules |
+| [docs/QUANTITATIVE_METHODOLOGY.md](docs/QUANTITATIVE_METHODOLOGY.md) | Price and volume indicators, valuation multiples, advanced DCF |
+| [docs/DATA_PROVIDER_COMPARISON.md](docs/DATA_PROVIDER_COMPARISON.md) | Market-data providers, prices and licence terms |
+| [docs/BACKTESTING_METHODOLOGY.md](docs/BACKTESTING_METHODOLOGY.md) | Why there is no back-test yet, and how a fair one would work |
+| [docs/V3_IMPLEMENTATION_PLAN.md](docs/V3_IMPLEMENTATION_PLAN.md) | Version 3 audit, decisions, costs and deferred features |
 | [docs/IMPROVEMENT_PLAN.md](docs/IMPROVEMENT_PLAN.md) | The audit of version 1, the plan and what comes next |
 | [docs/CHANGELOG.md](docs/CHANGELOG.md) | What changed in each version |
 
@@ -30,6 +37,7 @@ These four text files hold Ivan's own writing. The site shows a section as soon 
 
 | File | Appears on |
 |---|---|
+| `research/*.txt` (eight files) | Research: three company case studies and five research questions |
 | `research/aapl-msft.txt` | Research → Apple vs. Microsoft |
 | `research/wmt-cost.txt` | Research → Walmart vs. Costco |
 | `research/ko-pep.txt` | Research → Coca-Cola vs. PepsiCo |
@@ -83,6 +91,12 @@ sh financeiq/tests/run.sh
 
 The first line tells the SEC who is asking, which their rules require. Then:
 
+Then save a dated rating snapshot (this is what makes upgrades and downgrades appear):
+
+```bash
+python3 financeiq/tools/snapshot_ratings.py
+```
+
 1. Read the build output for anything marked `!!` or `FAILED`.
 2. Check the Methodology page for new data notes.
 3. The AI summaries in `data/summaries.json` quote figures and are **not** updated automatically. The test run
@@ -90,16 +104,35 @@ The first line tells the SEC who is asking, which their rules require. Then:
    entry and the site will say that no summary exists.
 4. Regenerate the sample PDF: open `report.html#AAPL-MSFT`, press "Save as PDF", and replace the file in `reports/`.
 
+## Adding market data
+
+The Quantitative and Valuation grades need daily prices. Read
+[docs/DATA_PROVIDER_COMPARISON.md](docs/DATA_PROVIDER_COMPARISON.md) first: most plans do not allow a public
+site to show prices or figures calculated from them. Once you have files you are licensed to use, put one CSV
+per ticker in `financeiq/tools/prices/` (that folder is never published) and run:
+
+```bash
+python3 financeiq/tools/build_prices.py --source "Provider name, plan" --display-prices no
+```
+
+To remove market data again:
+
+```bash
+python3 financeiq/tools/build_prices.py --clear
+```
+
+Never put an API key in the repository.
+
 ## Deploy
 
-GitHub Pages publishes whatever is on the `main` branch. Version 2 was built on the branch `financeiq-v2`.
+GitHub Pages publishes whatever is on the `main` branch. Version 3 was built on the branch `financeiq-v3`.
 
 ```bash
 git checkout main
 ```
 
 ```bash
-git merge financeiq-v2
+git merge financeiq-v3
 ```
 
 ```bash

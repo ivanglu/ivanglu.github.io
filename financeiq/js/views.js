@@ -158,7 +158,7 @@ const Views = (() => {
     const input = Core.dcfInputs(c);
     const results = {};
     for (const [id] of SCENARIOS) {
-      results[id] = Calc.dcf({ fcf0: input.fcf0, years: input.years, cash: input.cash, debt: input.debt, shares: input.shares, ...input.scenarios[id] });
+      results[id] = Calc.dcf({ fcf0: input.fcf0, years: input.years, cash: input.cash, debt: input.debt, shares: input.shares, fade: Boolean(input.fade), ...input.scenarios[id] });
     }
     return { input, results };
   }
@@ -208,5 +208,70 @@ const Views = (() => {
     };
   }
 
-  return { METRICS, chart, legend, bar, scoreText, healthCard, SCORE_ROWS, scorecard, sourceTable, SCENARIOS, dcfRun, dcfScenarioTable, BENCH, benchmark };
+  /* ---------------- stock rating ---------------- */
+
+  // A letter grade in a box. The letter carries the meaning; color only reinforces it.
+  const gradeBox = (g, size = "") => (g
+    ? `<i class="fq-grade fq-grade--${g} ${size ? "fq-grade--" + size : ""}" title="${g}: ${Ratings.GRADE_WORDS[g]}">${g}</i>`
+    : `<i class="fq-grade fq-grade--na ${size ? "fq-grade--" + size : ""}" title="Not available">n/a</i>`);
+  const rfmt = (v, kind) => (isNum(v) ? Ratings.format(v, kind) : "n/a");
+
+  // Six cards: the overall rating and the five categories.
+  function ratingCards(rating) {
+    const overall = `
+      <div class="fq-rcard">
+        <h3>${rating.complete ? "Overall rating" : "Partial rating"}</h3>
+        <div class="fq-rcard__row">${gradeBox(rating.grade)}<strong>${scoreText(rating.overall)}</strong><span class="fq-muted">/ 100</span></div>
+        <small>${rating.complete ? "All five categories." : `From ${5 - rating.missing.length} of 5 categories (${Math.round(rating.weightCovered)}% of the weight). ${rating.missing.join(" and ")} not available.`}</small>
+      </div>`;
+    return `<div class="fq-ratings">${overall}${rating.categories.map((c) => `
+      <div class="fq-rcard ${c.available ? "" : "fq-rcard--na"}">
+        <h3>${esc(c.label)} <span class="fq-muted">· ${c.weight.toFixed(0)}%</span></h3>
+        <div class="fq-rcard__row">${gradeBox(c.grade)}<strong>${scoreText(c.score)}</strong>${c.available ? `<span class="fq-muted">${Ratings.GRADE_WORDS[c.grade]}</span>` : ""}</div>
+        <small>${c.available ? `${Math.round(c.coverage * 100)}% of measures available` : esc(c.reason)}</small>
+      </div>`).join("")}</div>`;
+  }
+
+  // Every measure behind one category: value, comparison, both scores and the result.
+  function factorTable(cat, company) {
+    const hasPeers = cat.factors.some((f) => isNum(f.peerMedian));
+    const rows = cat.factors.map((f) => `
+      <tr><td>${esc(f.label)}<span class="fq-hint">${esc(f.why)} ${f.higher ? "Higher is better." : "Lower is better."} Scale: 0 at ${rfmt(f.lo, f.fmt)}, 100 at ${rfmt(f.hi, f.fmt)}.</span></td>
+        <td>${isNum(f.value) ? rfmt(f.value, f.fmt) : f.note ? `<span class="fq-term" tabindex="0" data-tip="${esc(f.note)}">${isNum(f.score) ? "see note" : "n/a"}</span>` : "n/a"}</td>
+        ${hasPeers ? `<td class="fq-hide-sm">${rfmt(f.peerMedian, f.fmt)}</td>` : ""}
+        <td class="fq-hide-sm">${rfmt(f.universeMedian, f.fmt)}</td>
+        <td class="fq-hide-sm">${scoreText(f.absolute)}</td><td class="fq-hide-sm">${scoreText(f.rank)}</td>
+        <td><span class="fq-gcell"><b>${scoreText(f.score)}</b>${gradeBox(f.grade, "sm")}</span></td></tr>`).join("");
+    return `
+      <div class="fq-tablewrap"><table class="fq-table fq-table--dense">
+        <thead><tr><th>Measure</th><th>${esc(company.ticker)}</th>${hasPeers ? `<th class="fq-hide-sm">${esc(company.group)} median</th>` : ""}
+          <th class="fq-hide-sm">Median of ${Core.state.list.length}</th><th class="fq-hide-sm">Scale score</th><th class="fq-hide-sm">${term("percentile", "Rank score")}</th><th>Score</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+      <p class="fq-small fq-muted">Score = average of the scale score (a straight line between two published levels) and the rank score (percentile among the ${Core.state.list.length} companies FinanceIQ tracks, not the whole market).
+        Source: ${esc(cat.source)}. Methodology version ${Ratings.VERSION}.</p>`;
+  }
+
+  const factorSections = (rating, company, open = null) => rating.categories.map((c) => `
+    <details class="fq-factors" ${c.id === open ? "open" : ""}>
+      <summary>${gradeBox(c.grade, "sm")}${esc(c.label)} <span>${c.available ? `${scoreText(c.score)} / 100 · adds ${c.contribution.toFixed(1)} points to the rating` : "not available"}</span></summary>
+      <div><p class="fq-panel__what">${esc(c.about)}</p>${c.available || c.factors.some((f) => isNum(f.score)) ? factorTable(c, company) : `<p class="fq-note">${esc(c.reason)}</p>`}</div>
+    </details>`).join("");
+
+  // Line chart of a quarterly field. xs are quarter-end dates.
+  function quarterChart(host, companies, key, { height = 220, kind = "pct" } = {}) {
+    const xs = [...new Set(companies.flatMap((c) => c.quarters.filter((q) => isNum(q[key])).map((q) => q.end.slice(0, 7))))].sort().slice(-9);
+    Chart.line(host, {
+      xs, height, label: key, fmt: (v) => fmt(v, kind), axisFmt: Chart.axis[kind] || ((v) => fmt(v, kind)),
+      xTitle: (x) => "Quarter ended " + x,
+      series: companies.map((c, i) => ({ name: c.name, short: c.ticker, color: COLORS[companies.length === 1 ? 0 : i],
+        values: Object.fromEntries(c.quarters.map((q) => [q.end.slice(0, 7), q[key]])) })),
+    });
+  }
+
+  // Shown wherever a market-based figure would go when there is no price data.
+  const noMarket = () => `<div class="fq-note"><p><strong>Market data is not connected.</strong> Share prices are licensed data. No free source was found that permits a public website to show prices or figures calculated from them, so FinanceIQ does not show any.
+    The calculations are built and tested; they switch on when a licensed price file is added. See the <a href="methodology.html#market">methodology</a>.</p></div>`;
+
+  return { gradeBox, rfmt, ratingCards, factorTable, factorSections, quarterChart, noMarket, METRICS, chart, legend, bar, scoreText, healthCard, SCORE_ROWS, scorecard, sourceTable, SCENARIOS, dcfRun, dcfScenarioTable, BENCH, benchmark };
 })();

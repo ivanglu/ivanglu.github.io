@@ -1,5 +1,36 @@
 # Changelog
 
+## 3.0.0 (25 November 2026, on branch `financeiq-v3`, not yet deployed)
+
+### Added
+- **Stock rating:** five categories (fundamentals, quantitative momentum, valuation, earnings momentum,
+  financial quality), letter grades, a composite, six weight presets, per-measure detail and rule-based
+  explanations. Three categories are live. Quantitative and Valuation are built and tested but switched off
+  because no licensed price data is available.
+- **Company page** (`company.html#NVDA`) with eight tabs. Choosing two companies is no longer required.
+- **Search as you type** in the top bar, on the dashboard and in the company pickers, with keyboard control
+  and recently viewed companies.
+- **Dashboard, screener** (sort, filter, ready-made screens, CSV export, saved screens) and **watchlist**.
+- **Quarterly and trailing-twelve-month data** from 10-Q filings: growth, acceleration, margins.
+- **Valuation multiples** from a typed-in price, **reverse DCF**, **fading growth**, **3-year average start**
+  and a **WACC helper** in the DCF simulator.
+- **Rating snapshots** (`data/ratings-history.json`), started 25 November 2026.
+- **Light and dark themes**, slate-blue visual identity, colour used for meaning.
+- Five new research templates.
+- `js/quant.js`, `js/ratings.js`, `js/screen.js`; `tools/snapshot_ratings.py`, `tools/build_prices.py`,
+  `tools/crosscheck_quant.py`; 99 new unit tests and 9 new pipeline tests.
+- Provider research, rating, quantitative and back-testing methodology documents.
+
+### Changed
+- Navigation: Dashboard, Screener, Compare, Watchlist, Research, Methodology. The six comparison pages sit
+  under Compare. `#AAPL-MSFT` and `#NVDA` links to the start page are redirected.
+- The start page is now a dashboard. Its old content moved to the top of the Compare page.
+- Stock-split detection uses annual and quarterly filings together.
+
+### Deferred (reasons in V3_IMPLEMENTATION_PLAN.md)
+- Live Quantitative and Valuation grades, price charts, analyst estimates and surprises, Form 13F ownership,
+  back-testing, comparing more than two companies, automatic scheduled refresh.
+
 ## 2.0.0 (24 November 2026, on branch `financeiq-v2`, not yet deployed)
 
 ### Added

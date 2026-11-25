@@ -22,6 +22,20 @@ Core.start({
       Object.entries(Calc.PRESETS).map(([name, w]) => `<tr><td>${name}</td>${Calc.SCORE_MODEL.map((c) => `<td>${w[c.id]}%</td>`).join("")}</tr>`).join("")
       }</tbody></table></div>`;
 
+    // stock rating model, read from Ratings.MODEL
+    $("#m-version").textContent = Ratings.VERSION;
+    $$(".m-count").forEach((el) => { el.textContent = d.companies.length; });
+    $("#m-rating").innerHTML = `<div class="fq-tablewrap"><table class="fq-table" style="font-size:14px">
+      <thead><tr><th>Category and measure</th><th>Weight in category</th><th>0 on the scale</th><th>100 on the scale</th></tr></thead><tbody>${
+      Ratings.MODEL.map((c) => { const total = c.factors.reduce((t, f) => t + (f.w || 100 / c.factors.length), 0);
+        return `<tr class="fq-group"><td>${c.label} · default weight ${c.weight}% · ${c.source}${c.market ? " · needs market data" : ""}</td><td></td><td></td><td></td></tr>` +
+        c.factors.map((f) => `<tr><td>${esc(f.label)}<span class="fq-hint">${esc(f.why)}</span></td><td>${(((f.w || 100 / c.factors.length) / total) * 100).toFixed(0)}%</td><td>${Ratings.format(f.lo, f.fmt)}</td><td>${Ratings.format(f.hi, f.fmt)}</td></tr>`).join(""); }).join("")
+      }</tbody></table></div>`;
+    $("#m-rpresets").innerHTML = `<div class="fq-tablewrap"><table class="fq-table" style="font-size:14px">
+      <thead><tr><th>Preset</th>${Ratings.MODEL.map((c) => `<th>${c.short}</th>`).join("")}</tr></thead><tbody>${
+      Object.entries(Ratings.PRESETS).map(([name, w]) => `<tr><td>${name}</td>${Ratings.MODEL.map((c) => `<td>${w[c.id]}%</td>`).join("")}</tr>`).join("")
+      }</tbody></table></div>`;
+
     const groups = [...new Set(d.companies.map((c) => c.group))];
     $("#m-groups").innerHTML = `<div class="fq-tablewrap"><table class="fq-table" style="font-size:14px">
       <thead><tr><th>Group</th><th style="text-align:left">Companies</th></tr></thead><tbody>${

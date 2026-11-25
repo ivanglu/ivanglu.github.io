@@ -118,7 +118,13 @@ def find(value, style, filing, max_pages=MAX_PAGES):
     return printed(value, style)[0], None, None
 
 
+QUARTER_CHECKS = [("revenue", "Revenue", "millions"), ("operatingIncome", "Operating income", "millions"),
+                  ("netIncome", "Net income", "millions"), ("eps", "Diluted EPS", "per share")]
+
+
 def main(argv):
+    quarterly = "--quarterly" in argv
+    argv = [a for a in argv if not a.startswith("-")]
     tickers = [a.upper() for a in argv] or DEFAULT
     data = {c["ticker"]: c for c in json.loads((bd.OUT / "financials.json").read_text())["companies"]}
     counts = {"statement": 0, "note": 0, "missing": 0}
@@ -135,6 +141,21 @@ def main(argv):
     print("|---|---|---|---:|---:|---|---|")
     for t in tickers:
         c = data[t]
+        if quarterly:
+            # the latest quarter that came straight from a 10-Q (not a calculated fourth quarter)
+            direct = [q for q in c["quarters"] if not q["q4Derived"]]
+            if not direct:
+                continue
+            q = direct[-1]
+            filing = Filing(c["cik"], q["accn"])
+            for key, label, style in QUARTER_CHECKS:
+                if q[key] is None:
+                    print(f"| {c['name']} | quarter to {q['end']} | {label} | not reported | | | n/a |")
+                    continue
+                needle, page, title = find(q[key], style, filing)
+                stored = f"{q[key]:,.2f}" if style == "per share" else f"{q[key]:,.0f}"
+                print(f"| {c['name']} | quarter to {q['end']} | {label} | {stored} | {needle} | {page + ' (' + title + ')' if page else 'not found'} | {result(page)} |")
+            continue
         y = c["years"][-1]
         filing = Filing(c["cik"], y["accn"])
         for key, label, style in CHECKS:

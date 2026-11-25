@@ -1,0 +1,40 @@
+published:
+revised:
+
+<!--
+IVAN: THIS FILE IS YOURS.  Research question: Nvidia vs. Microsoft
+Who captures more economic value from AI?
+
+Write each section in your own words under its "## heading" line. Do not rename the headings.
+A section appears on the site as soon as it has text. Empty sections stay hidden from visitors.
+To see what is still missing, open:  research.html?r=nvda-msft&draft=1
+
+Formatting: leave a blank line between paragraphs.  - starts a bullet.
+            **bold**  *italic*  [link text](https://www.sec.gov)
+When you finish, fill in "published:" at the top. When you change it later, fill in "revised:".
+
+Nothing inside this comment is shown on the site.
+
+Questions to think about (prompts only, delete or ignore):
+  - Nvidia sells the chips; Microsoft buys them and sells the services. Which side keeps more of each dollar (margins)? Which is spending more to get it (capital spending)?
+  - What does 'economic value' mean here: revenue, profit, free cash flow or return on capital? Pick one and defend it.
+  - Nvidia's results were much weaker in fiscal 2023. What does that say about how durable its position is?
+-->
+
+## Initial hypothesis
+
+
+## Quantitative findings
+
+
+## Interpretation
+
+
+## Counterarguments
+
+
+## Risks and limitations
+
+
+## Conclusion
+

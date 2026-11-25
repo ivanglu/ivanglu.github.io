@@ -1,0 +1,40 @@
+published:
+revised:
+
+<!--
+IVAN: THIS FILE IS YOURS.  Research question: Do high-quality companies outperform?
+Do high-quality companies outperform their lower-quality peers?
+
+Write each section in your own words under its "## heading" line. Do not rename the headings.
+A section appears on the site as soon as it has text. Empty sections stay hidden from visitors.
+To see what is still missing, open:  research.html?r=quality-outperformance&draft=1
+
+Formatting: leave a blank line between paragraphs.  - starts a bullet.
+            **bold**  *italic*  [link text](https://www.sec.gov)
+When you finish, fill in "published:" at the top. When you change it later, fill in "revised:".
+
+Nothing inside this comment is shown on the site.
+
+Questions to think about (prompts only, delete or ignore):
+  - Why can you not test this fairly using today's quality grades and past returns? (Look up 'look-ahead bias' and 'survivorship bias'.)
+  - All 38 companies here are large and successful. How does that limit any conclusion?
+  - Design the test you would run once a year of rating snapshots exists.
+-->
+
+## Initial hypothesis
+
+
+## Quantitative findings
+
+
+## Interpretation
+
+
+## Counterarguments
+
+
+## Risks and limitations
+
+
+## Conclusion
+

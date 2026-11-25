@@ -348,3 +348,95 @@ End with one thing you learned that surprised you. Decide in advance what it is.
 17. What do you understand now that you did not when you started?
 
 For 15 to 17 there is nothing to memorise. Write your answers down once, in your own words, and they will be there when you need them.
+
+
+---
+
+# Version 3: what you also need to be able to explain
+
+## 14. Business quality is not the same as investment quality
+
+A great company can be a poor investment if the price already assumes more than it can deliver. FinanceIQ
+keeps two things apart for this reason: the Financial Health Score (the business) and the stock rating (the
+stock, on five tests).
+
+**Likely question:** "Your site gives Nvidia an A. Should I buy it?" Know why the honest answer is no: the
+rating is partial, it has no price in it at all, and it has never been tested against returns.
+
+**Exercise 20.** Find a company with a high Financial Health Score and a mediocre earnings-momentum grade. Explain in two sentences how both can be true.
+
+## 15. Growth versus acceleration
+
+Growth: how much bigger than a year ago. Acceleration: whether that growth rate is rising or falling.
+Revenue growing 30%, then 20%, is still growing, and decelerating by 10 points.
+
+Year-over-year comparison (same quarter a year earlier) removes seasonality. Trailing twelve months (the last
+four quarters added up) gives a full-year figure that is always recent.
+
+**Exercise 21.** On the Earnings tab for two companies, find one that is growing but decelerating. What would you want to know before deciding whether that matters?
+
+**Exercise 22.** Why does FinanceIQ refuse to show EPS growth when the year-ago quarter was a loss? Work out the "growth" from −$0.10 to +$0.50 and explain why the number is meaningless.
+
+## 16. How the stock rating is scored
+
+Each measure gets two scores, averaged: a fixed scale (absolute) and a percentile rank among the 38 tracked
+companies (relative). Categories need 70% of their measures; a complete rating needs all five categories.
+
+Be ready to defend, or criticise, these choices:
+- Why average an absolute and a relative score?
+- Why is a missing measure skipped instead of scored zero?
+- Why is the rating called "partial" instead of filling the gap?
+- Why should nobody call a rank among 38 companies a "percentile of the market"?
+
+**Exercise 23.** Open the "How much do the weights matter?" research page. Which companies' ranks move most between presets, and why?
+
+## 17. Why two grades are empty
+
+This is a strength to explain, not a gap to hide. Share prices are licensed. Before building, the terms of nine
+providers were read, and no free plan allowed a public site to show prices or figures calculated from them. So
+the calculations were built and tested, and left switched off.
+
+**Likely question:** "Why not just pull prices from a free website?" Answer: because the terms forbid it, and
+a finance project that ignores licences is not one to be proud of.
+
+**Exercise 24.** Read the summary table in `DATA_PROVIDER_COMPARISON.md`. Which option would you choose with a budget of zero, and what would you need in writing first?
+
+## 18. Momentum indicators and what they cannot tell you
+
+Relative strength = a stock's return minus the benchmark's. A moving average smooths prices; price above its
+200-day average is a rising long-term trend. On-Balance Volume adds volume on up days and subtracts it on down
+days.
+
+None of these show who is buying. Volume on a rising day is a proxy for demand, nothing more. Real
+institutional holdings are public only quarterly and weeks late (Form 13F).
+
+**Exercise 25.** By hand: closes 10, 11, 10, 11 with volumes 0, 100, 50, 100. Work out On-Balance Volume after each day. (Answer: 0, 100, 50, 150.)
+
+## 19. Reverse DCF
+
+An ordinary DCF takes assumptions and gives a value. A reverse DCF takes the price and asks what growth the
+price implies. It turns "is it cheap?" into "is that growth believable?", which is a better question.
+
+**Exercise 26.** On a company's Valuation tab, type in a share price. What growth does the price imply? Compare it with the last three years of revenue growth. Is it plausible?
+
+## 20. Why there is no back-test
+
+The 38 companies were chosen in 2026 because they are large and successful. Any test of "how would the
+ratings have done" on that list mostly proves that successful companies were successful (survivorship bias).
+Instead, FinanceIQ saves a dated snapshot of every rating from 25 November 2026 onward, so a clean record
+builds up.
+
+**Exercise 27.** Explain look-ahead bias with an example from this project: what would go wrong if a rating "for January" used a filing published in February?
+
+## 21. Updated two-minute demonstration
+
+| Time | Page | Do | Say (in your own words) |
+|---|---|---|---|
+| 0:00 | Dashboard | Type "NV" in the search box, pick Nvidia | Where the data comes from |
+| 0:20 | Company | Point at the grades. Open one category | Every grade can be opened to the numbers behind it |
+| 0:45 | Company | Earnings tab | Growth versus acceleration |
+| 1:05 | Screener | Click a ready-made screen, sort a column | How you would narrow 38 companies down |
+| 1:25 | Valuation | Drag the discount rate. Tick "fade growth" | Why a DCF is a range |
+| 1:45 | Research | Open one case study you have written | Your question and your conclusion |
+
+If asked about the two empty grades, use section 17. Do not skip past them.

@@ -81,6 +81,46 @@
       </ul>
       <p class="fq-note">The score describes reported financial statements. It does not look at the share price, at management, at products or at the future. It is not a prediction of stock performance and not a recommendation.</p>
 
+      <h2 id="rating">Stock rating (methodology version <span id="m-version"></span>)</h2>
+      <p>The stock rating is separate from the Financial Health Score above. It grades a company as a stock on five categories and combines them into one composite. The health score asks "is this a strong business?". The rating also asks whether results are improving, how the shares have behaved and what they cost.</p>
+      <h3>How one measure is scored</h3>
+      <ol>
+        <li><strong>Scale score.</strong> A straight line between two published levels, from 0 to 100, capped at both ends. This is an absolute judgement: "a 30% operating margin is excellent anywhere".</li>
+        <li><strong>Rank score.</strong> The measure's percentile among the companies FinanceIQ tracks. Ties share a rank. This is a relative judgement. It is a rank among <span class="m-count"></span> large US companies, not a market-wide percentile, and it is skipped when fewer than ten companies have the measure.</li>
+        <li><strong>Measure score</strong> = the average of the two. Using both stops a measure from scoring 100 just because every company clears a fixed bar, and stops it from scoring 0 just because the group is strong.</li>
+      </ol>
+      <h3>From measures to a grade</h3>
+      <ul>
+        <li>A category score is the weighted average of its measures. Measures are equally weighted unless the table shows otherwise.</li>
+        <li><strong>A category is graded only if measures carrying at least 70% of its weight could be calculated.</strong> A measure that cannot be calculated is left out. It is never scored as zero.</li>
+        <li><strong>A complete rating needs all five categories and 80% overall coverage.</strong> Otherwise the site shows a "partial rating", says which categories are missing, and averages only the ones it has. It does not quietly spread the missing weight around and call the result complete.</li>
+        <li>Grades use the unrounded score: A 80 to 100, B 60 to 79.99, C 40 to 59.99, D 20 to 39.99, F below 20.</li>
+        <li>The category weights are starting assumptions (25 / 25 / 20 / 15 / 15). They have not been shown to be the best weights. The presets and your own choices change the composite, never the category grades.</li>
+        <li>Outliers are handled by the cap on the scale score and by using ranks, which ignore how extreme a value is.</li>
+        <li>Losses: a growth rate from a negative starting point is not calculated. Where the latest figure is itself a loss the measure scores 0. Yields are used in place of multiples in Valuation so that loss-making companies can still be measured.</li>
+      </ul>
+      <div id="m-rating"></div>
+      <h3>Presets</h3>
+      <div id="m-rpresets"></div>
+      <h3>What a grade means, and does not</h3>
+      <p class="fq-note">A grade summarises reported results and, when connected, past prices, using fixed published rules. An A is not a buy signal and an F is not a sell signal. The ratings have not been back-tested, so there is no evidence here that higher grades lead to better returns. Rating snapshots have been saved since 25 November 2026 so that this can be examined honestly later.</p>
+
+      <h2 id="market">Market data, and why two grades are empty</h2>
+      <p>Quantitative momentum and Valuation need share prices. Prices are licensed data. Before building these grades, the terms of nine data providers were read (see <code>docs/DATA_PROVIDER_COMPARISON.md</code>). No free plan was found that clearly permits a public website to show prices or figures calculated from them, so FinanceIQ shows neither.</p>
+      <ul>
+        <li>The calculations exist, are unit-tested, and are checked against a second implementation written separately in Python.</li>
+        <li>They switch on when a price file obtained under a suitable licence is added with <code>tools/build_prices.py</code>. Nothing else on the site depends on it.</li>
+        <li>Until then the Valuation tab lets you type a share price yourself to see the multiples and a reverse DCF for one company. That price stays in your browser.</li>
+        <li><strong>Volume measures are proxies.</strong> On-Balance Volume, Chaikin Money Flow and up/down volume describe how much traded on rising and falling days. They cannot show who traded, and are never described here as institutional buying.</li>
+        <li><strong>Returns are price returns.</strong> Dividends are not included, for the stock or the benchmark.</li>
+      </ul>
+      <h3>Not built, on purpose</h3>
+      <ul>
+        <li><strong>Analyst estimates, surprises and revisions.</strong> They need licensed consensus data with dates attached. Nothing is inferred in their place.</li>
+        <li><strong>Institutional ownership (Form 13F).</strong> Quarterly, up to 45 days late, and laborious to process correctly. It could never show real-time buying.</li>
+        <li><strong>Back-testing.</strong> A fair test needs prices, filings as they were known on each past date, and companies that have since disappeared. Without those a back-test would flatter the ratings. See <code>docs/BACKTESTING_METHODOLOGY.md</code>.</li>
+      </ul>
+
       <h2 id="dcf">4. DCF valuation</h2>
       <p>The model is a standard two-stage enterprise-value DCF.</p>
       <p class="fq-formula">cash flow in year t = starting cash flow × (1 + growth)<sup>t</sup></p>
@@ -114,6 +154,9 @@
   </main>
   <footer class="fq-footer" id="fq-footer"></footer>
   <script src="js/calc.js"></script>
+  <script src="js/quant.js"></script>
+  <script src="js/ratings.js"></script>
+  <script src="js/screen.js"></script>
   <script src="js/chart.js"></script>
   <script src="js/core.js"></script>
   <script src="js/views.js"></script>

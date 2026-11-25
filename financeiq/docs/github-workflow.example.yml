@@ -1,0 +1,48 @@
+# Example: refresh FinanceIQ data every week and open a pull request with the result.
+# To use it, copy this file to  .github/workflows/financeiq-data.yml  in the repository,
+# and add a repository secret named FINANCEIQ_CONTACT containing a contact email address
+# (the SEC asks automated tools to identify themselves).
+#
+# It never publishes anything by itself: you review and merge the pull request.
+
+name: FinanceIQ data refresh
+on:
+  schedule:
+    - cron: "0 9 * * 6"        # Saturdays, 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Download filings and rebuild the data file
+        env:
+          FINANCEIQ_CONTACT: ${{ secrets.FINANCEIQ_CONTACT }}
+        run: python3 financeiq/tools/build_data.py --refresh
+      - name: Save a dated rating snapshot
+        run: python3 financeiq/tools/snapshot_ratings.py
+      - name: Run every test
+        run: sh financeiq/tests/run.sh
+      - name: Open a pull request if anything changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet; then echo "No changes."; exit 0; fi
+          branch="data-refresh-$(date +%Y-%m-%d)"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout -b "$branch"
+          git commit -am "FinanceIQ data refresh $(date +%Y-%m-%d)"
+          git push origin "$branch"
+          gh pr create --title "FinanceIQ data refresh $(date +%Y-%m-%d)" --body "Automatic refresh. Tests passed. Check the AI summaries for figures that no longer match before merging."

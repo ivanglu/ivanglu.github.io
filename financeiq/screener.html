@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock screener · FinanceIQ</title>
+  <meta name="description" content="Sort and filter every company FinanceIQ tracks by grade, growth, profitability and quality." />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'self'; form-action 'none'" />
+  <meta name="theme-color" content="#0d0f14" />
+  <link rel="stylesheet" href="financeiq.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ff7a3d'/%3E%3Ctext x='50' y='72' font-size='64' font-weight='800' text-anchor='middle' font-family='Arial' fill='%2314171c'%3EF%3C/text%3E%3C/svg%3E" />
+</head>
+<body class="fq-is-loading">
+  <header class="fq-top" id="fq-nav"></header>
+  <div class="fq-hero" id="fq-hero">
+    <p class="fq-eyebrow">Screener</p>
+    <h1>Find companies</h1>
+    <p class="fq-lede">Sort by any column, filter by grade or sector, or start from a ready-made screen. Tick two companies to compare them.</p>
+    
+  </div>
+  <main class="fq-main" id="app"></main>
+  <footer class="fq-footer" id="fq-footer"></footer>
+  <script src="js/calc.js"></script>
+  <script src="js/quant.js"></script>
+  <script src="js/ratings.js"></script>
+  <script src="js/screen.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/pages/screener.js"></script>
+</body>
+</html>

@@ -159,6 +159,68 @@ class Splits(unittest.TestCase):
         self.assertEqual(e["2019-12-31"], 3.0)
 
 
+class Quarters(unittest.TestCase):
+    def test_three_month_periods_are_kept_and_longer_ones_ignored(self):
+        facts = {"Revenues": tag(
+            fact("2024-06-30", 30, "2024-07-25", form="10-Q", start="2024-04-01"),     # the quarter
+            fact("2024-06-30", 58, "2024-07-25", form="10-Q", start="2024-01-01"),     # six months to date
+        )}
+        self.assertEqual(bd.quarter_facts(facts, "Revenues")["2024-06-30"]["val"], 30)
+
+    def test_twelve_week_quarter_counts(self):
+        self.assertTrue(bd.is_quarter({"start": "2024-09-02", "end": "2024-11-24"}))   # Costco, 84 days
+        self.assertFalse(bd.is_quarter({"start": "2024-01-01", "end": "2024-06-30"}))
+
+    def test_quarter_keeps_the_first_report_not_next_years_comparative(self):
+        facts = {"Revenues": tag(
+            fact("2024-06-30", 30, "2024-07-25", form="10-Q", start="2024-04-01"),
+            fact("2024-06-30", 31, "2025-07-24", form="10-Q", start="2024-04-01"),
+        )}
+        self.assertEqual(bd.quarter_facts(facts, "Revenues")["2024-06-30"]["val"], 30)
+
+    def test_year_to_date_cash_flow_is_found_by_its_start_date(self):
+        facts = {"NetCashProvidedByUsedInOperatingActivities": tag(
+            fact("2024-09-30", 90, "2024-10-25", form="10-Q", start="2024-01-01"),     # nine months
+            fact("2024-09-30", 35, "2024-10-25", form="10-Q", start="2024-07-01"),     # a single quarter
+        )}
+        tags = ["NetCashProvidedByUsedInOperatingActivities"]
+        self.assertEqual(bd.year_to_date(facts, tags, "2024-09-30", "2024-01-01"), 90)
+        self.assertIsNone(bd.year_to_date(facts, tags, "2024-09-30", "2023-10-01"))
+
+    def test_date_helpers(self):
+        self.assertEqual(bd.shift_year("2026-07-26"), "2025-07-26")
+        self.assertEqual(bd.shift_year("2024-02-29"), "2023-02-28")
+        self.assertEqual(bd.nearest(["2025-07-27", "2025-04-27"], "2025-07-26"), "2025-07-27")   # 52/53-week years drift by a day
+        self.assertIsNone(bd.nearest(["2025-04-27"], "2025-07-26"))
+
+    def test_one_split_seen_in_many_filings_is_applied_once(self):
+        # the same 10-for-1 split shows up in three later filings; old periods must be adjusted once, not three times
+        shares = {
+            "2022-12-31": [("2023-02-01", 10)],
+            ("q", "2023-03-31"): [("2023-05-01", 10), ("2024-05-01", 100)],
+            ("q", "2023-06-30"): [("2023-08-01", 10), ("2024-08-01", 100)],
+            "2023-12-31": [("2024-02-01", 100)],
+        }
+        s, _, splits = bd.split_adjust(shares, {})
+        self.assertEqual(len(splits), 1)
+        self.assertEqual(s["2022-12-31"], 100)
+
+    def test_built_quarters_are_consecutive_and_fourth_quarters_add_up(self):
+        path = bd.OUT / "financials.json"
+        if not path.exists():
+            self.skipTest("data/financials.json has not been built")
+        for c in json.loads(path.read_text())["companies"]:
+            q = c["quarters"]
+            self.assertGreaterEqual(len(q), 12, c["ticker"])
+            for a, b in zip(q, q[1:]):
+                self.assertTrue(70 <= bd.days(a["end"], b["end"]) <= 130, f"{c['ticker']} {a['end']} -> {b['end']}")
+            # a calculated Q4 plus the three reported quarters must equal the annual figure
+            years = {y["end"]: y for y in c["years"]}
+            for i, row in enumerate(q):
+                if row["q4Derived"] and i >= 3 and row["end"] in years:
+                    self.assertAlmostEqual(sum(x["revenue"] for x in q[i - 3:i + 1]), years[row["end"]]["revenue"], delta=1, msg=c["ticker"])
+
+
 class QualityChecks(unittest.TestCase):
     def year(self, fy, **o):
         y = {"fy": fy, "assets": 100, "liabilities": 60, "equity": 40, "revenue": 50, "grossProfit": 20,

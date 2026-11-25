@@ -30,7 +30,57 @@
       charts: ["roic", "opMargin", "freeCashFlow", "debt"],
       metrics: ["revenue", "opMargin", "nopat", "investedCapital", "roic", "roe", "assetTurnover", "fcfMargin", "debtToEquity", "netDebtToEbitda"],
     },
+    {
+      id: "nvda-msft", pair: ["NVDA", "MSFT"], title: "Nvidia vs. Microsoft",
+      question: "Who captures more economic value from AI?",
+      charts: ["revenue", "opMargin", "freeCashFlow", "capex"],
+      metrics: ["revenue", "cagr3", "grossMargin", "opMargin", "netIncome", "freeCashFlow", "capexShare", "roic", "netCash"],
+    },
+    // Questions about all tracked companies. `universe` lists the columns of the data table.
+    {
+      id: "strong-but-unattractive", title: "Strong company, unattractive investment?",
+      question: "Can a financially strong company be an unattractive investment?",
+      universe: ["health", "fundamental", "quality", "valuation", "roic", "revenueGrowth"], sort: "health",
+      needsMarket: "Answering this fully needs the Valuation grade, which needs share prices. Until market data is connected, the table shows business strength only.",
+    },
+    {
+      id: "momentum-vs-fundamentals", title: "Momentum and fundamentals",
+      question: "Does market momentum provide information beyond financial fundamentals?",
+      universe: ["fundamental", "earnings", "quant", "revenueGrowth", "epsGrowth"], sort: "fundamental",
+      needsMarket: "The Quantitative momentum grade needs daily share prices, which are not connected. The table shows the fundamentals side of the comparison.",
+    },
+    {
+      id: "quality-outperformance", title: "Do high-quality companies outperform?",
+      question: "Do high-quality companies outperform their lower-quality peers?",
+      universe: ["quality", "roic", "opMargin", "revenueGrowth", "relative6m"], sort: "quality",
+      needsMarket: "\"Outperform\" means share-price returns, which need price history. FinanceIQ began saving dated rating snapshots on 25 November 2026, so a fair test becomes possible only as time passes. The table shows quality grades today.",
+    },
+    {
+      id: "weight-sensitivity", title: "How much do the weights matter?",
+      question: "How sensitive are stock rankings to different scoring weights?",
+      universe: ["rankBalanced", "rankGrowth", "rankQuality", "rankConservative", "rankRange"], sort: "rankRange",
+    },
   ];
+
+  // Columns available for the all-companies table of a universe report.
+  const presetRank = (name) => {
+    const rated = Ratings.rateAll(Core.state.list, Core.state.market, Ratings.PRESETS[name]);
+    const order = [...Core.state.list].sort((a, b) => rated[b.ticker].overall - rated[a.ticker].overall).map((c) => c.ticker);
+    return (c) => order.indexOf(c.ticker) + 1;
+  };
+  const UCOLS = {
+    health: ["Financial Health Score", "score", (c) => Core.score(c).overall],
+    fundamental: ["Fundamentals", "score", (c) => Core.rating(c.ticker).categories[0].score],
+    quant: ["Quantitative", "score", (c) => Core.rating(c.ticker).categories[1].score],
+    valuation: ["Valuation", "score", (c) => Core.rating(c.ticker).categories[2].score],
+    earnings: ["Earnings momentum", "score", (c) => Core.rating(c.ticker).categories[3].score],
+    quality: ["Financial quality", "score", (c) => Core.rating(c.ticker).categories[4].score],
+    roic: ["ROIC", "pct", (c) => c.L.roic], opMargin: ["Operating margin", "pct", (c) => c.L.opMargin],
+    revenueGrowth: ["Revenue growth (TTM)", "pct", (c) => c.ttm.revenueGrowth], epsGrowth: ["EPS growth (TTM)", "pct", (c) => c.ttm.epsGrowth],
+    relative6m: ["6-month relative strength", "pct", (c) => { const m = Core.state.market && Core.state.market[c.ticker]; return m ? m.q.relative6m : null; }],
+    rankBalanced: ["Rank: Balanced", "rank", null], rankGrowth: ["Rank: Growth", "rank", null], rankQuality: ["Rank: Quality", "rank", null],
+    rankConservative: ["Rank: Conservative", "rank", null], rankRange: ["Largest rank change", "rank", null],
+  };
 
   // Rows available for the "key metrics" table of a report.
   const ROWS = {
@@ -77,13 +127,13 @@
       const total = Object.keys(IVAN).length;
       const status = written === total ? `Published${docs[i].meta.published ? " " + esc(docs[i].meta.published) : ""}`
         : written ? `In progress: ${written} of ${total} sections written` : "Data ready · analysis in progress";
-      const [a, b] = r.pair.map(Core.company);
+      const [a, b] = r.pair ? r.pair.map(Core.company) : [null, null];
       return `
       <a class="fq-link" href="research.html?r=${r.id}${draft ? "&draft=1" : ""}">
         <span class="fq-badge" style="margin-bottom:10px">${status}</span>
         <strong>${esc(r.title)} →</strong>
         <span>${esc(r.question)}</span>
-        <span style="display:block;margin-top:10px">${swatch(0)} ${esc(a.name)} FY${a.L.fy} &nbsp; ${swatch(1)} ${esc(b.name)} FY${b.L.fy}</span>
+        <span style="display:block;margin-top:10px">${a ? `${swatch(0)} ${esc(a.name)} FY${a.L.fy} &nbsp; ${swatch(1)} ${esc(b.name)} FY${b.L.fy}` : `All ${Core.state.list.length} tracked companies`}</span>
       </a>`;
     }).join("");
     $("#app").innerHTML = `
@@ -110,6 +160,46 @@
     if (doc.sections[key]) return `<div class="fq-card fq-ivan"><p class="fq-ivan__by">Written by Ivan Glushchenko</p>${doc.sections[key]}</div>`;
     if (draft) return `<div class="fq-todo"><strong>Draft view: "${title}" is not written yet.</strong><br>${prompt}<br><small>Add your text under the line <code>## ${title}</code> in <code>${file(current.id)}</code>.</small></div>`;
     return null;
+  }
+
+  // A report about every tracked company: Ivan's sections around one sortable data table.
+  async function universeReport(r) {
+    current = null;
+    const doc = Core.parseDoc(await Core.getText(file(r.id)));
+    current = r;
+    const blocks = Object.fromEntries(Object.keys(IVAN).map((id) => [id, ivanBlock(doc, id)]));
+    const anyWritten = Object.keys(IVAN).some((id) => doc.sections[IVAN[id][0]]);
+    const ranks = { rankBalanced: presetRank("Balanced"), rankGrowth: presetRank("Growth Investor"), rankQuality: presetRank("Quality Investor"), rankConservative: presetRank("Conservative Investor") };
+    ranks.rankRange = (c) => { const v = Object.keys(ranks).filter((k) => k !== "rankRange").map((k) => ranks[k](c)); return Math.max(...v) - Math.min(...v); };
+    const get = (key) => ranks[key] || UCOLS[key][2];
+    const rows = Core.state.list.map((c) => ({ c, v: Object.fromEntries(r.universe.map((k) => [k, get(k)(c)])) }))
+      .sort((x, y) => (Calc.isNum(y.v[r.sort]) ? y.v[r.sort] : -1e9) - (Calc.isNum(x.v[r.sort]) ? x.v[r.sort] : -1e9));
+    const cell = (k, v) => (UCOLS[k][1] === "score" ? `<span class="fq-gcell">${Views.scoreText(v)}${k === "health" ? "" : Views.gradeBox(Ratings.grade(v), "sm")}</span>` : UCOLS[k][1] === "rank" ? (Calc.isNum(v) ? v : "n/a") : fmt(v, "pct"));
+    let n = 0;
+    const section = (title, body) => (body ? `<h2 class="fq-report-h"><span>${String(++n).padStart(2, "0")}</span>${title}</h2>${body}` : "");
+    const dates = [doc.meta.published && `Published ${esc(doc.meta.published)}`, doc.meta.revised && `Revised ${esc(doc.meta.revised)}`].filter(Boolean).join(" · ");
+    $("#app").innerHTML = `
+      <section class="fq-section">
+        <p><a href="research.html${draft ? "?draft=1" : ""}">← All case studies</a></p>
+        <p class="fq-eyebrow" style="margin-top:18px">Research question · ${esc(r.title)}</p>
+        <p class="fq-rq">${esc(r.question)}</p>
+        <p class="fq-muted">By Ivan Glushchenko${dates ? " · " + dates : ""} · Data updated ${esc(Core.state.data.generated)}</p>
+        ${anyWritten || draft ? "" : `<p class="fq-note">Ivan's written analysis for this question is in progress. The table below is filled in automatically.</p>`}
+        ${draft ? `<p class="fq-note fq-note--warn">Draft view. Dashed boxes are sections still to be written. Visitors do not see them.</p>` : ""}
+        ${r.needsMarket && !Core.state.market ? `<p class="fq-note fq-note--warn"><strong>Data limit.</strong> ${r.needsMarket}</p>` : ""}
+        ${section("Initial hypothesis", blocks.hypothesis)}
+        ${section("Data", `<div class="fq-card"><div class="fq-tablewrap"><table class="fq-table fq-table--dense">
+          <thead><tr><th>Company</th>${r.universe.map((k) => `<th>${UCOLS[k][0]}</th>`).join("")}</tr></thead>
+          <tbody>${rows.map((x) => `<tr><td><a href="company.html#${x.c.ticker}"><b>${x.c.ticker}</b></a> <span class="fq-muted">${esc(x.c.name)}</span></td>${r.universe.map((k) => `<td>${cell(k, x.v[k])}</td>`).join("")}</tr>`).join("")}</tbody>
+        </table></div><p class="fq-small fq-muted">Sorted by ${UCOLS[r.sort][0].toLowerCase()}. ${r.id === "weight-sensitivity" ? "Rank 1 is the highest overall score under that preset. The last column is the gap between a company's best and worst rank across the four presets." : "Scores are 0 to 100. Grades are relative to the tracked companies and fixed scales."} Calculated from SEC filings by the code described on the methodology page.</p></div>`)}
+        ${section("Quantitative findings", blocks.findings)}
+        ${section("Interpretation", blocks.interpretation)}
+        ${section("Counterarguments", blocks.counter)}
+        ${section("Risks and limitations", blocks.risks)}
+        ${section("Conclusion", blocks.conclusion)}
+        <div class="fq-cta" style="margin-top:28px"><a class="fq-btn" href="screener.html">Open the screener</a></div>
+      </section>`;
+    current = null;   // no charts to redraw
   }
 
   let current = null, pair = [];
@@ -169,7 +259,7 @@
     usesPair: false,
     render() {
       const r = REPORTS.find((x) => x.id === params.get("r"));
-      return r ? report(r) : list();
+      return !r ? list() : r.universe ? universeReport(r) : report(r);
     },
   });
   Core.onResize(() => current && drawCharts());

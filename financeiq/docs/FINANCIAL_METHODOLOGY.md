@@ -192,3 +192,20 @@ there is no price feed.
 No number, score, valuation or rule-based explanation is produced by AI. The "Strengths and risks" text on the
 Comparison page is AI-written, labelled and dated. The figures it quotes are checked against the data by
 `tools/check_summaries.py`; its judgements are not reviewed by a person. Text marked "Written by Ivan" is his.
+
+## 7. Quarterly and trailing-twelve-month figures (version 3)
+
+| Measure | Formula |
+|---|---|
+| Quarter | A three-month period from a 10-Q. The fourth quarter = full year − first three quarters |
+| Year-over-year growth | this quarter ÷ same quarter a year earlier − 1. Not calculated if the earlier value is zero or negative |
+| TTM total | sum of the last four quarters (income statement items) |
+| TTM cash flow | last full year + this year to date − the same months of last year (10-Q cash flow statements are cumulative) |
+| Acceleration | this quarter's year-over-year growth − last quarter's, in percentage points |
+| Margin change | this period's margin − the margin a year earlier, in percentage points |
+| Accruals ratio | (net income − operating cash flow) ÷ average total assets |
+| Share count change | compound yearly change in diluted shares over three years |
+| Margin variability | standard deviation of the operating margin over five years |
+
+The stock rating built on these is described in [STOCK_RATING_METHODOLOGY.md](STOCK_RATING_METHODOLOGY.md), and
+price-based measures in [QUANTITATIVE_METHODOLOGY.md](QUANTITATIVE_METHODOLOGY.md).

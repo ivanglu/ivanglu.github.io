@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FinanceIQ: company financial analysis</title>
-  <meta name="description" content="Compare public companies on growth, profitability, debt, cash flow and valuation using their SEC filings. A project by Ivan Glushchenko." />
+  <title>FinanceIQ: stock research and ratings</title>
+  <meta name="description" content="Research, grade, screen and compare public companies using their SEC filings. Transparent ratings with every rule published. A project by Ivan Glushchenko." />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'self'; form-action 'none'" />
   <meta name="theme-color" content="#0d0f14" />
   <link rel="stylesheet" href="financeiq.css" />
@@ -12,18 +12,21 @@
 </head>
 <body class="fq-is-loading">
   <header class="fq-top" id="fq-nav"></header>
-  <div class="fq-hero">
+  <div class="fq-hero" id="fq-hero">
     <p class="fq-eyebrow">FinanceIQ</p>
-    <h1>Which company is financially stronger?</h1>
-    <p class="fq-lede">Pick two public companies. FinanceIQ reads ten years of their annual reports from the U.S. Securities and Exchange Commission, scores their financial health, estimates what each is worth, and shows the working behind every number.</p>
-    <div id="fq-picker"></div>
+    <h1>Stock research that shows its working</h1>
+    <p class="fq-lede">Look up a company, see how it is graded on fundamentals, earnings momentum and financial quality, and open any grade to check the numbers behind it. Every figure comes from SEC filings.</p>
+    
   </div>
   <main class="fq-main" id="app"></main>
   <footer class="fq-footer" id="fq-footer"></footer>
   <script src="js/calc.js"></script>
+  <script src="js/quant.js"></script>
+  <script src="js/ratings.js"></script>
+  <script src="js/screen.js"></script>
   <script src="js/chart.js"></script>
   <script src="js/core.js"></script>
   <script src="js/views.js"></script>
-  <script src="js/pages/overview.js"></script>
+  <script src="js/pages/dashboard.js"></script>
 </body>
 </html>
