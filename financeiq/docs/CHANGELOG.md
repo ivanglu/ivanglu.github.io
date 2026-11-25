@@ -14,10 +14,12 @@
   Ivan's sections loaded from text files.
 - **Printable report** with a sample PDF.
 - **Methodology** and **About** pages. Guided two-minute tour. Glossary tooltips.
-- 22 more companies (38 in total).
+- 22 more companies (38 in total), each with an AI-written summary whose quoted figures are checked automatically.
+- Charts can be read from the keyboard: Tab to a chart, then the arrow keys.
 - EPS, share counts, interest expense, depreciation, tax, current assets and liabilities, with stock-split
   adjustment detected from the filings.
-- Automated tests: 99 for the formulas, 28 for the data pipeline, an independent Python recalculation, and a
+- Automated tests: 99 for the formulas, 30 for the data pipeline, an independent Python recalculation, a check of every figure
+  quoted in the AI summaries, and a
   validator that checks stored figures against the filings.
 - Documentation set in `docs/`.
 
@@ -33,6 +35,8 @@
 ### Fixed
 - Total debt was understated where a balance sheet has one "short-term debt" line (PepsiCo by $2.8B; ten other
   companies by smaller amounts) and overstated for Netflix in FY2019–FY2020.
+- Total debt now uses balance-sheet lines before a total tagged in the notes (Home Depot was $4.5B low, Broadcom
+  $2.0B high), and a line tagged twice is counted once (IBM was $6.4B high).
 - A later quarterly filing could override an annual-report figure (PepsiCo and Walmart debt in version 1).
 - Target had no net income for FY2017–FY2020.
 - The "Cash" label now says "Cash and short-term investments".

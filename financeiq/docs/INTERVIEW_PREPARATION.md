@@ -293,7 +293,7 @@ Being able to list these without being asked is a sign of real understanding.
 6. The health score uses one scale for all industries.
 7. The DCF uses one growth rate and illustrative discount rates.
 8. The data depends on how each company tagged its filing.
-9. AI summaries cover 16 companies and do not update automatically.
+9. AI summaries do not update automatically, and only their numbers are checked, not their judgements.
 10. Only the latest year of each company was matched against its filing.
 
 **Exercise 19.** Pick the limitation you think matters most and describe how you would fix it.

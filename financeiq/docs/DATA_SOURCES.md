@@ -105,4 +105,5 @@ companies[] ticker, name, legalName, group, blurb, cik, filingsUrl, splits[], wa
 - "Cash" leaves out long-term investments, which understates the cushion at Apple and Alphabet.
 - Some companies do not report gross profit (Disney, McDonald's, Starbucks, Oracle), operating income
   (Nike, IBM, TJX) or interest expense (Apple since FY2024).
-- AI summaries exist for 16 of the 38 companies and are not regenerated when data is refreshed.
+- AI summaries are not regenerated when data is refreshed. `tools/check_summaries.py` reports any figure they
+  quote that the data no longer contains.

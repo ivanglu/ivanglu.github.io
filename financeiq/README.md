@@ -55,8 +55,8 @@ browsers block pages opened that way from loading data files.
 sh financeiq/tests/run.sh
 ```
 
-This runs the formula tests, the data-pipeline tests, the independent Python recalculation and a syntax check
-of every script. It needs a Mac (it uses the JavaScript engine built into macOS) or Node.js. The formula tests
+This runs the formula tests, the data-pipeline tests, the independent Python recalculation, the check of figures
+quoted in the AI summaries and a syntax check of every script. It needs a Mac (it uses the JavaScript engine built into macOS) or Node.js. The formula tests
 also run in any browser at `financeiq/tests/`.
 
 To check stored figures against the filings themselves (downloads from sec.gov, takes about a minute):
@@ -85,8 +85,9 @@ The first line tells the SEC who is asking, which their rules require. Then:
 
 1. Read the build output for anything marked `!!` or `FAILED`.
 2. Check the Methodology page for new data notes.
-3. The AI summaries in `data/summaries.json` quote figures and are **not** updated automatically. Review them,
-   or remove a company's entry and the site will say that no summary exists.
+3. The AI summaries in `data/summaries.json` quote figures and are **not** updated automatically. The test run
+   lists every quoted figure that no longer matches the data. Rewrite those sentences, or remove the company's
+   entry and the site will say that no summary exists.
 4. Regenerate the sample PDF: open `report.html#AAPL-MSFT`, press "Save as PDF", and replace the file in `reports/`.
 
 ## Deploy

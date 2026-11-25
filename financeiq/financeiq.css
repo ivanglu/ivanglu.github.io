@@ -174,6 +174,7 @@ body.fq-light .fq-table .fq-sel { background: rgba(0, 0, 0, 0.04); }
 .fq-legend span { display: inline-flex; align-items: center; gap: 7px; }
 .fq-chart { position: relative; touch-action: pan-y; }
 .fq-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.fq-chart svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
 .fq-chart text { font-family: var(--font-sans); font-size: 12px; fill: var(--fg-dim); }
 .fq-chart .fq-endlabel { fill: var(--fg-muted); font-weight: 600; }
 .fq-chart .fq-gridline { stroke: var(--grid); stroke-width: 1; }

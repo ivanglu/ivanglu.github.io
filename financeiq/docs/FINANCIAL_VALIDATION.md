@@ -10,14 +10,16 @@ Every check here can be repeated with one command (see the end of this file).
 | Check | What it proves | Result |
 |---|---|---|
 | 1. Formula unit tests | Each formula gives the hand-worked answer on made-up round numbers | 99 of 99 pass |
-| 2. Pipeline unit tests | The data script picks the right filing, handles splits, builds debt correctly | 28 of 28 pass |
-| 3. Stored figures vs the filings | The numbers in `financials.json` are printed in the 10-K we link to | 432 of 433 found (all 38 companies) |
+| 2. Pipeline unit tests | The data script picks the right filing, handles splits, builds debt correctly | 30 of 30 pass |
+| 3. Stored figures vs the filings | The numbers in `financials.json` are printed in the 10-K we link to | 438 of 439 found (all 38 companies) |
+| 3c. Total debt vs the balance sheet | No debt line was left out or counted twice | 30 exact, 3 explained, 1 off by 0.1%, 4 not machine-readable |
 | 4. Independent recalculation | A second implementation in Python gets the same ratios as the website | 114 of 114 match (6 companies) |
+| 5. Figures quoted in AI summaries | Every "$x.xB" and "x.x%" in the summaries is a figure the site holds for that company | 459 of 459 (38 summaries) |
 
-**What this does not prove.** Check 3 confirms that each stored number appears in the filing. It does not prove
-that a total built from several lines (total debt) includes every line it should. That was checked by reading
-the balance sheet for seven companies only (section 3b). Nothing here checks that the scoring thresholds or
-DCF assumptions are "right": those are judgement calls, documented in FINANCIAL_METHODOLOGY.md.
+**What this does not prove.** Only the latest fiscal year of each company was checked against its filing.
+Nothing here checks that the scoring thresholds or DCF assumptions are "right": those are judgement calls,
+documented in FINANCIAL_METHODOLOGY.md. Check 5 verifies the numbers in the AI summaries, not whether their
+judgements are fair.
 
 ## 1. Formula unit tests
 
@@ -45,7 +47,7 @@ value, DCF input validation, sensitivity analysis, DCF defaults, peer statistics
 
 ## 2. Pipeline unit tests
 
-`tools/test_build_data.py`, 28 tests on made-up filings (they run offline) plus four checks on the real data file:
+`tools/test_build_data.py`, 30 tests on made-up filings (they run offline) plus four checks on the real data file:
 
 - the original 10-K is used, not a later restatement, and quarterly periods and 10-Q filings are ignored for full-year figures;
 - a 53-week fiscal year still counts as a year;
@@ -146,23 +148,17 @@ filings print it (millions, millions with one decimal, or thousands).
 
 ### 3b. All 38 companies
 
-Run on all 38 companies, 433 figures: **415 found on a primary financial statement, 17 found in a note to the
-statements, 1 not found.** The 18 that are not on a primary statement:
+Run on all 38 companies, 439 figures: **427 found on a primary financial statement, 11 found in a note to the
+statements, 1 not found.** The 12 that are not on a primary statement:
 
 | Company | Fiscal year | Figure | Stored value | Printed in filing as | Found on | Result |
 |---|---|---|---:|---:|---|---|
 | Alphabet (Google) | FY2025 | Debt, line 2 of 2 | 1,996,000,000 | 1,996 | R16.htm (Debt) | match (in a note, not on a statement) |
-| Oracle | FY2026 | Debt | 129,541,000,000 | 129,541 | R17.htm (NOTES PAYABLE AND OTHER BORROWINGS) | match (in a note, not on a statement) |
 | Adobe | FY2025 | Cash | 6,595,000,000 | 6,595 | R11.htm (CASH, CASH EQUIVALENTS AND SHORT-TERM INVESTMENTS) | match (in a note, not on a statement) |
 | Cisco | FY2026 | Cash | 14,297,000,000 | 14,297 | R20.htm (Investments) | match (in a note, not on a statement) |
 | Nvidia | FY2026 | Cash, line 2 of 2 | 39,065,000,000 | 39,065 | not found | **NOT FOUND: check by hand** |
-| AMD | FY2025 | Debt | 3,222,000,000 | 3,222 | R17.htm (Debt and Revolving Credit Facility) | match (in a note, not on a statement) |
-| Broadcom | FY2025 | Debt | 67,120,000,000 | 67,120 | R18.htm (Borrowings) | match (in a note, not on a statement) |
-| Qualcomm | FY2026 | Debt | 14,613,000,000 | 14,613 | R13.htm (Debt) | match (in a note, not on a statement) |
-| Micron | FY2026 | Debt | 5,179,000,000 | 5,179 | R15.htm (Debt) | match (in a note, not on a statement) |
 | Amazon | FY2025 | Debt, line 2 of 3 | 2,748,000,000 | 2,748 | R15.htm (Debt) | match (in a note, not on a statement) |
 | Amazon | FY2025 | Debt, line 3 of 3 | 455,000,000 | 455 | R15.htm (Debt) | match (in a note, not on a statement) |
-| Home Depot | FY2026 | Debt | 51,308,000,000 | 51,308 | R13.htm (DEBT AND DERIVATIVE INSTRUMENTS) | match (in a note, not on a statement) |
 | Coca-Cola | FY2025 | Debt, line 3 of 3 | 1,495,000,000 | 1,495 | R20.htm (DEBT AND BORROWING ARRANGEMENTS) | match (in a note, not on a statement) |
 | Colgate-Palmolive | FY2025 | Debt, line 2 of 2 | 1,115,000,000 | 1,115 | R15.htm (Long-Term Debt and Credit Facilities) | match (in a note, not on a statement) |
 | Colgate-Palmolive | FY2025 | Cash, line 2 of 2 | 107,000,000 | 107 | R16.htm (Fair Value Measurements and Financial Instruments) | match (in a note, not on a statement) |
@@ -170,30 +166,42 @@ statements, 1 not found.** The 18 that are not on a primary statement:
 | McDonald's | FY2025 | Debt, line 2 of 3 | 725,000,000 | 725 | R20.htm (Debt Financing) | match (in a note, not on a statement) |
 | McDonald's | FY2025 | Debt, line 3 of 3 | 798,000,000 | 798 | R20.htm (Debt Financing) | match (in a note, not on a statement) |
 
-- **In a note.** Some companies show one "long-term debt" line on the balance sheet and give the split or the
-  total in the debt note. The number is in the filing, on a later page. Small numbers such as 107 or 455 could
-  match by coincidence, so these 17 are weaker evidence than the 415.
+- **In a note.** Some companies show one "long-term debt" line on the balance sheet and give the current part
+  in the debt note. The number is in the filing, on a later page. Small numbers such as 107 or 455 could
+  match by coincidence, so these 11 are weaker evidence than the 427.
 - **Nvidia, cash line 2 (not found).** Nvidia's FY2026 10-K does not tag its short-term securities with a
   standard tag. The $39.1B comes from the following quarterly report, which repeats the year-end balance
   sheet. The site lists this on the Methodology page under Nvidia. It is a correct figure for the right date
   from a different filing than the one linked.
 
-### 3c. Balance sheets read by hand
+### 3c. Total debt against the balance sheet, all 38 companies
 
-For the totals that are sums, the balance sheet of the latest 10-K was read line by line:
+Check 3b proves each component is in the filing. It does not prove that nothing was left out. So for every
+company, every line on the latest balance sheet whose label mentions debt, borrowings, notes payable or
+commercial paper was added up and compared with the stored total.
 
-| Company | Balance-sheet debt lines | Sum | Stored | Result |
-|---|---|---:|---:|---|
-| Apple FY2026 | Commercial paper 1,997 + term debt current 9,906 + term debt non-current 68,208 | 80,111 | 80,111 | match |
-| Walmart FY2026 | Short-term borrowings 6,596 + long-term debt due within one year 3,542 + long-term debt 34,624 | 44,762 | 44,762 | match |
-| PepsiCo FY2025 | Short-term debt obligations 6,861 + long-term debt obligations 42,321 | 49,182 | 49,182 | match after fix (see below) |
-| Coca-Cola FY2025 | Loans and notes payable 1,551 + current maturities 1,822 + long-term debt 42,119 | 45,492 | 45,436 | **$56M (0.1%) low** |
-| Alphabet FY2025 | Long-term debt 46,547 (balance sheet) + 1,996 (debt note) | 48,543 | 48,543 | match |
-| Amazon FY2025 | Long-term debt 65,648 (balance sheet) + 2,748 + 455 (debt note) | 68,851 | 68,851 | match |
-| McDonald's FY2025 | Long-term debt 39,973 (balance sheet) + 725 + 798 (debt note) | 41,496 | 41,496 | match |
+| Result | Companies |
+|---|---|
+| Stored total equals the balance-sheet lines exactly (30) | Apple, Microsoft, Meta, Oracle, Adobe, Salesforce, IBM, Cisco, Nvidia, AMD, Intel, Broadcom, Texas Instruments, Micron, Applied Materials, Walmart, Target, Home Depot, Lowe's, TJX, PepsiCo, Procter & Gamble, Colgate-Palmolive, Mondelez, Kimberly-Clark, General Mills, Netflix, Disney, Nike, Starbucks |
+| Stored total is higher because the current part of long-term debt is only in the debt note (3) | Alphabet (+2.0B), Amazon (+3.2B), McDonald's (+1.5B) |
+| Stored total 0.1% lower (1) | Coca-Cola: "loans and notes payable" 1,551 is matched to the commercial paper tag, 1,495 |
+| Balance sheet could not be read automatically; components confirmed by 3b only (4) | Qualcomm, Costco, Dollar General, Tesla |
 
-Cash and short-term investments, same method: Apple 36,305 + 20,417 = 56,722 (match); PepsiCo 9,159 + 371 = 9,530
-(match); Walmart 10,727 (match).
+Examples, in $ millions:
+
+| Company | Balance-sheet debt lines | Sum | Stored |
+|---|---|---:|---:|
+| Apple FY2026 | Commercial paper 1,997 + term debt 9,906 + term debt 68,208 | 80,111 | 80,111 |
+| Walmart FY2026 | Short-term borrowings 6,596 + due within one year 3,542 + long-term debt 34,624 | 44,762 | 44,762 |
+| PepsiCo FY2025 | Short-term debt obligations 6,861 + long-term debt obligations 42,321 | 49,182 | 49,182 |
+| Home Depot FY2026 | Short-term debt 4,464 + current installments 4,967 + long-term debt 46,341 | 55,772 | 55,772 |
+| IBM FY2025 | Short-term debt 6,424 + long-term debt 54,836 | 61,260 | 61,260 |
+
+For Tesla the balance sheet shows "debt and finance leases" of 8,376 in total. The stored 6,584 is the debt
+note's figure without finance leases, which is consistent with the site's definition (leases excluded).
+
+Cash and short-term investments, read by hand for three companies: Apple 36,305 + 20,417 = 56,722 (match);
+PepsiCo 9,159 + 371 = 9,530 (match); Walmart 10,727 (match).
 
 ## 4. Independent recalculation
 
@@ -329,20 +337,22 @@ significant figures is strong evidence that neither has an arithmetic slip.
 | 5 | Automatic check | McDonald's reports share counts in millions as a plain number | Share count 1,000,000 times too small | **Fixed.** Unit conversion with a note in the data |
 | 6 | Reading Netflix's history | A "long-term debt" tag from the notes (22.4B) was used for FY2020 where the balance sheet shows 16.3B | Netflix FY2019 and FY2020 debt overstated | **Fixed** by the same rule change as #1 |
 | 7 | Reading Coca-Cola's balance sheet (3c) | "Loans and notes payable" (1,551) is matched to the commercial paper tag (1,495) | Coca-Cola debt 0.1% low | **Open.** Too small to affect any ratio shown. Listed under known limitations |
+| 9 | Comparing every balance sheet (3c) | A total-debt figure tagged in the notes was preferred over the balance-sheet lines. It leaves out commercial paper at Home Depot and is stated before discounts at Broadcom | Home Depot debt 4.5B too low, Broadcom 2.0B too high | **Fixed.** Balance-sheet lines are used first. Unit test added |
+| 10 | Comparing every balance sheet (3c) | IBM tags its single "short-term debt" line with two tags, and both were added | IBM debt 6.4B too high | **Fixed.** A line tagged twice is counted once. Unit test added |
 | 8 | Automatic check | Reported EPS differs from net income / shares in a few early years (Microsoft FY2017, Salesforce FY2017 to FY2018, others) | None on the latest year. EPS uses the latest restated value while net income is as first reported | **Accepted.** Listed per company on the Methodology page |
 
 ## 6. Not verified
 
-- Total debt was read by hand for 7 of 38 companies. For the other 31 only "each component appears in the filing" was checked.
 - Only the latest fiscal year of each company was checked against its filing. Earlier years use the same code but were not individually matched.
+- Total debt for Qualcomm, Costco, Dollar General and Tesla could not be compared with the balance sheet automatically.
 - Interest expense, depreciation, tax, current assets and current liabilities were not matched against filings. They feed interest coverage, EBITDA, ROIC and the current ratio.
-- The AI-written summaries were checked against the data by the AI that wrote them, and five sentences were corrected after discrepancy #1. No human has checked them.
+- The AI summaries: every quoted dollar and percentage figure is checked by `tools/check_summaries.py`. The wording and judgements (for example "which usually indicates a large one-off charge") have not been reviewed by a person.
 - No lint, type-check or build step exists because the project has no build tooling. The equivalent run here is a syntax check of every script, which passes.
 
 ## How to repeat everything
 
 ```bash
-sh financeiq/tests/run.sh                         # checks 1, 2, 4 and the syntax check
+sh financeiq/tests/run.sh                         # checks 1, 2, 4, 5 and the syntax check
 ```
 
 ```bash

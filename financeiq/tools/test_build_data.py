@@ -97,8 +97,16 @@ class TotalDebt(unittest.TestCase):
         # Alphabet's layout: only a non-current line on the balance sheet, plus a total in the notes
         self.assertEqual(self.total({"ltDebtNoncurrent": 48.5, "ltDebtAll": 49.1}), 49.1)
 
-    def test_total_tag_wins(self):
-        self.assertEqual(self.total({"debtTotalTag": 99, "ltDebtNoncurrent": 80}), 99)
+    def test_balance_sheet_lines_beat_a_total_from_the_notes(self):
+        # Home Depot's layout: the tagged total leaves out commercial paper
+        self.assertEqual(self.total({"debtTotalTag": 51, "ltDebtNoncurrent": 46, "ltDebtCurrent": 5, "shortTermBorrowings": 4}), 55)
+
+    def test_total_tag_used_when_there_are_no_balance_sheet_lines(self):
+        self.assertEqual(self.total({"debtTotalTag": 99, "ltDebtAll": 80}), 99)
+
+    def test_one_line_tagged_twice_is_counted_once(self):
+        # IBM's layout: "short-term debt" carries two tags with the same value
+        self.assertEqual(self.total({"ltDebtNoncurrent": 55, "ltDebtCurrent": 6, "shortTermBorrowings": 6}), 61)
 
     def test_parts_are_returned_for_checking(self):
         total, parts = bd.total_debt(lambda k, e: {"ltDebtNoncurrent": 70, "ltDebtCurrent": 10}.get(k), "x")

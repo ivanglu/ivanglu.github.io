@@ -190,4 +190,5 @@ there is no price feed.
 ## 6. AI
 
 No number, score, valuation or rule-based explanation is produced by AI. The "Strengths and risks" text on the
-Comparison page is AI-written, labelled, dated and limited to 16 companies. Text marked "Written by Ivan" is his.
+Comparison page is AI-written, labelled and dated. The figures it quotes are checked against the data by
+`tools/check_summaries.py`; its judgements are not reviewed by a person. Text marked "Written by Ivan" is his.

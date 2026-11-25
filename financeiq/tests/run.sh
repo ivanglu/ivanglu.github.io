@@ -23,6 +23,10 @@ echo "== Independent recalculation in Python (tools/crosscheck.py) =="
 python3 tools/crosscheck.py > /dev/null || status=1
 
 echo
+echo "== Figures quoted in the AI summaries (tools/check_summaries.py) =="
+python3 tools/check_summaries.py || status=1
+
+echo
 echo "== Syntax check of every script =="
 if [ -x "$JSC" ]; then
   for f in js/*.js js/pages/*.js tests/*.js; do
@@ -30,6 +34,6 @@ if [ -x "$JSC" ]; then
   done
   echo "all scripts parse"
 fi
-python3 -m py_compile tools/build_data.py tools/validate_filings.py tools/crosscheck.py && echo "python scripts compile" || status=1
+python3 -m py_compile tools/build_data.py tools/validate_filings.py tools/crosscheck.py tools/check_summaries.py && echo "python scripts compile" || status=1
 
 exit $status

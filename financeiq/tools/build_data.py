@@ -339,12 +339,14 @@ def total_debt(get, end):
     so the total can be checked against the balance sheet. (None, []) if nothing is reported.
 
     Balance sheets split debt in different ways, so the rule is, in order:
-      1. a single reported total, if the company tags one;
-      2. long-term debt (non-current) + current debt. Current debt is the "DebtCurrent"
+      1. long-term debt (non-current) + current debt. Current debt is the "DebtCurrent"
          line when there is one (it already contains the current part of long-term debt
          and any short-term borrowings); otherwise current long-term debt + short-term borrowings;
+      2. a single reported total, if the company tags one. This comes second because such
+         totals are usually in a note and can leave out commercial paper (Home Depot) or
+         be stated before discounts (Broadcom);
       3. a long-term debt figure that includes the current part, + short-term borrowings
-         (also used in step 2 when the balance sheet has no current-debt line at all);
+         (also used in step 1 when the balance sheet has no current-debt line at all);
       4. whatever current pieces exist.
     """
     def parts(*keys):
@@ -352,17 +354,20 @@ def total_debt(get, end):
         found = [(k, v) for k, v in found if v is not None]
         return (sum(v for _, v in found), found) if found else (None, [])
 
-    if get("debtTotalTag", end) is not None:
-        return parts("debtTotalTag")
     if get("ltDebtNoncurrent", end) is not None:
         if get("debtCurrent", end) is not None:
             return parts("ltDebtNoncurrent", "debtCurrent")
+        current, short = get("ltDebtCurrent", end), get("shortTermBorrowings", end)
         # No current-debt line at all, but a long-term figure that includes the current
         # part exists (Alphabet, Amazon): use that, or the current part would be lost.
-        no_current_line = get("ltDebtCurrent", end) is None and get("shortTermBorrowings", end) is None
-        if no_current_line and (get("ltDebtAll", end) or 0) >= get("ltDebtNoncurrent", end):
-            return parts("ltDebtAll", "shortTermBorrowings")
+        if current is None and short is None and (get("ltDebtAll", end) or 0) >= get("ltDebtNoncurrent", end):
+            return parts("ltDebtAll")
+        # IBM tags its one "short-term debt" line with both tags: count it once.
+        if current is not None and current == short:
+            return parts("ltDebtNoncurrent", "ltDebtCurrent")
         return parts("ltDebtNoncurrent", "ltDebtCurrent", "shortTermBorrowings")
+    if get("debtTotalTag", end) is not None:
+        return parts("debtTotalTag")
     if get("ltDebtAll", end) is not None:
         return parts("ltDebtAll", "shortTermBorrowings")
     if get("debtCurrent", end) is not None:

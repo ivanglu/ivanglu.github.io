@@ -1,7 +1,7 @@
 {
  "generated": "2026-11-24",
  "model": "Claude (Anthropic)",
- "note": "Written by an AI model from the 10-K figures in this folder. Covers 16 of the 38 companies. Review after running tools/build_data.py: the numbers quoted here are not updated automatically.",
+ "note": "Written by an AI model from the 10-K figures in this folder. The figures quoted are checked against the data by tools/check_summaries.py, but the judgements are not checked by a person. Review after running tools/build_data.py.",
  "companies": {
   "AAPL": {
    "strengths": [
@@ -193,6 +193,270 @@
     "Profitability is far below where it was. Operating margin was 16.8% in fiscal 2021 and is 9.7% now.",
     "Negative shareholder equity (-$7.7B), and debt of $13.3B against $3.9B of cash.",
     "Sales growth has slowed to about 2% a year."
+   ]
+  },
+  "ORCL": {
+   "strengths": [
+    "Growth has picked up: sales rose from $40.5B in fiscal 2021 to $67.4B, including a jump from $57.4B in the latest year.",
+    "A high operating margin of 30.6%, with net income of $17.1B, the highest of the last six years.",
+    "Operating cash flow has doubled in five years, from $15.9B to $32.0B."
+   ],
+   "risks": [
+    "Capital spending leapt from $2.1B in fiscal 2021 to $55.7B, turning free cash flow negative: -$23.7B in fiscal 2026.",
+    "Very heavy debt of $129.5B against $31.9B of cash, up from $92.6B a year earlier.",
+    "A thin equity base ($42.5B, and negative as recently as fiscal 2022) leaves little cushion for that debt."
+   ]
+  },
+  "ADBE": {
+   "strengths": [
+    "Exceptional margins: an 89.3% gross margin and a 36.6% operating margin in fiscal 2025.",
+    "Steady growth every year, from $12.9B in fiscal 2020 to $23.8B.",
+    "It turns almost all operating cash into free cash flow: $9.9B, on only $0.2B of capital spending."
+   ],
+   "risks": [
+    "Debt rose from $4.1B to $6.2B in the latest year and is now close to its $6.6B of cash.",
+    "Shareholder equity has fallen from $16.5B in fiscal 2023 to $11.6B, which usually reflects share buybacks larger than profit.",
+    "Growth is slowing: about 10.5% a year over the last three years against 13.1% over five."
+   ]
+  },
+  "CRM": {
+   "strengths": [
+    "Profitability has transformed: operating margin went from 3.3% in fiscal 2023 to 20.1%, and net income from $0.2B to $7.5B.",
+    "Free cash flow has more than tripled in five years, from $4.1B to $14.4B.",
+    "A 77.7% gross margin and very little capital spending ($0.6B)."
+   ],
+   "risks": [
+    "Growth is slowing, from 14.3% a year over five years to 9.8% over three.",
+    "Debt rose from $8.4B to $14.4B in the latest year while cash fell from $14.0B to $9.6B.",
+    "Return on invested capital is only 9.1%, low for a software company, because of the large amount of capital tied up from past acquisitions."
+   ]
+  },
+  "IBM": {
+   "strengths": [
+    "Profit has recovered strongly: net income rose from $1.6B in 2022 to $10.6B in 2025, with a net margin of 15.7%.",
+    "Dependable free cash flow of more than $12B in each of the last three years.",
+    "Gross margin has improved steadily, from 48.3% in 2020 to 58.2%."
+   ],
+   "risks": [
+    "Heavy debt: $61.3B against $13.6B of cash.",
+    "Sales of $67.5B are still below the $73.6B of 2020, partly because it separated a large business in 2021.",
+    "Short-term bills are slightly larger than short-term assets (current ratio 0.96)."
+   ]
+  },
+  "CSCO": {
+   "strengths": [
+    "Very high gross margin, around 64% in every one of the last six years.",
+    "Reliable cash generation: free cash flow between $10.2B and $19.0B each year on very little capital spending.",
+    "Sales reached a new high of $63.3B in fiscal 2026, up from $56.7B."
+   ],
+   "risks": [
+    "Debt more than tripled in fiscal 2024, from $8.4B to $31.0B, and it now has more debt ($29.5B) than cash ($14.3B).",
+    "Slow long-run growth of 4.9% a year over five years.",
+    "Operating margin of 24.3% is below the 27.1% of fiscal 2022."
+   ]
+  },
+  "AMD": {
+   "strengths": [
+    "Fast growth: sales rose from $9.8B in 2020 to $34.6B, including a jump from $25.8B in the latest year.",
+    "A strong balance sheet with $10.6B of cash against $3.2B of debt.",
+    "Free cash flow nearly tripled in 2025, from $2.4B to $6.7B."
+   ],
+   "risks": [
+    "Margins are thin for a chip company: a 10.7% operating margin against 22.2% in 2021.",
+    "Return on invested capital is only 5.9%, held down by the large amount of equity ($63.0B) created by a 2022 acquisition.",
+    "Profit is volatile: net income fell from $3.2B in 2021 to $0.9B in 2023 before recovering to $4.3B."
+   ]
+  },
+  "INTC": {
+   "strengths": [
+    "Losses are narrowing: the net loss shrank from $18.8B in 2024 to $0.3B in 2025.",
+    "Cash rose to $37.4B, and debt fell from $50.0B to $46.6B.",
+    "Capital spending was cut from $23.9B to $14.6B, bringing free cash flow much closer to break-even."
+   ],
+   "risks": [
+    "Sales have fallen for years, from $79.0B in 2021 to $52.9B.",
+    "Free cash flow has been negative in each of the last four years, including -$4.9B in 2025.",
+    "Gross margin has collapsed from 56.0% in 2020 to 34.8%, and the operating margin is still negative."
+   ]
+  },
+  "AVGO": {
+   "strengths": [
+    "Rapid growth: sales rose from $23.9B in fiscal 2020 to $63.9B.",
+    "Very high profitability, with a 67.8% gross margin and a 39.9% operating margin.",
+    "It needs almost no capital spending ($0.6B), so nearly all operating cash becomes free cash flow: $26.9B."
+   ],
+   "risks": [
+    "Heavy debt of $65.1B against $16.2B of cash, after a large acquisition.",
+    "Profit is uneven: net income fell from $14.1B in fiscal 2023 to $5.9B in fiscal 2024 before rising to $23.1B.",
+    "Operating profit covers interest about 7.9 times, the lowest of the chip companies tracked here that are making a profit."
+   ]
+  },
+  "QCOM": {
+   "strengths": [
+    "Strong returns: a 21.2% return on invested capital and a 53.1% gross margin.",
+    "Net income of $13.6B in fiscal 2026 is the highest of the last six years.",
+    "Free cash flow has been positive every year, between $6.8B and $12.8B."
+   ],
+   "risks": [
+    "Sales fell in the latest year, from $44.3B to $43.1B, and operating margin dropped from 27.9% to 20.1%.",
+    "Net income rose while operating income fell, so the latest profit was helped by items outside the core business.",
+    "It holds more debt ($15.1B) than cash ($7.7B)."
+   ]
+  },
+  "TXN": {
+   "strengths": [
+    "Among the highest margins in the industry: a 57.0% gross margin and a 34.1% operating margin even in a weak period.",
+    "Short-term assets are more than four times short-term bills (current ratio 4.35).",
+    "Sales began to recover in 2025, from $15.6B to $17.7B."
+   ],
+   "risks": [
+    "Sales are still below the $20.0B of 2022, and net income has fallen from $8.7B to $5.0B.",
+    "Heavy factory spending ($4.5B to $5.1B a year since 2023) has cut free cash flow from $5.9B in 2022 to $2.6B.",
+    "Debt has doubled since 2020, from $6.8B to $14.0B, while cash fell to $4.9B."
+   ]
+  },
+  "MU": {
+   "strengths": [
+    "An extraordinary year: sales rose from $37.4B to $133.2B in fiscal 2026 and net income from $8.5B to $85.0B.",
+    "Margins at the top of the cycle: an 80.7% gross margin and a 63.8% net margin.",
+    "A much stronger balance sheet, with $43.4B of cash against $5.2B of debt."
+   ],
+   "risks": [
+    "Memory chips are a boom-and-bust business. In fiscal 2023 sales halved to $15.5B and the company lost $5.8B.",
+    "Results like fiscal 2026 depend on memory prices staying high, which history suggests they will not do indefinitely.",
+    "It needs very heavy investment: $30.7B of capital spending in the latest year, and free cash flow was negative in fiscal 2023."
+   ]
+  },
+  "AMAT": {
+   "strengths": [
+    "Consistently profitable: operating margin has stayed between 25.4% and 30.2% for six years.",
+    "More cash than debt: $8.6B against $6.6B.",
+    "Sales have grown every year, from $17.2B in fiscal 2020 to $28.4B."
+   ],
+   "risks": [
+    "Growth has slowed to 3.2% a year over the last three years.",
+    "Free cash flow fell from $7.5B to $5.7B as capital spending nearly doubled, from $1.2B to $2.3B.",
+    "Its customers are chip makers, whose spending on equipment rises and falls sharply with the industry cycle."
+   ]
+  },
+  "TGT": {
+   "strengths": [
+    "Still solidly profitable, with $3.7B of net income and positive free cash flow in the latest year.",
+    "Gross margin has recovered from 24.6% in fiscal 2023 to 27.9%.",
+    "Operating profit covers interest 11.5 times."
+   ],
+   "risks": [
+    "Sales have fallen three years in a row, from $109.1B to $104.8B.",
+    "Net income is well below the $6.9B of fiscal 2022, and free cash flow has dropped to $2.8B.",
+    "Debt of $16.5B is about three times its cash ($5.5B)."
+   ]
+  },
+  "HD": {
+   "strengths": [
+    "High returns for a retailer: a 24.7% return on invested capital and a 12.7% operating margin.",
+    "Strong cash generation, with $16.3B of operating cash flow and only $3.7B of capital spending.",
+    "Sales reached a new high of $164.7B."
+   ],
+   "risks": [
+    "Debt has climbed from $37.2B in fiscal 2021 to $55.8B, against just $1.4B of cash.",
+    "Profit is slipping: net income has fallen from $17.1B in fiscal 2023 to $14.2B and operating margin from 15.3% to 12.7%.",
+    "Shareholder equity is small ($12.8B) for a company this size, the result of large share buybacks."
+   ]
+  },
+  "LOW": {
+   "strengths": [
+    "A very high return on invested capital of 30.1%, and steady gross margin near 33%.",
+    "Dependable free cash flow of $6.2B to $9.3B a year.",
+    "Sales rose in the latest year, from $83.7B to $86.3B, after two years of decline."
+   ],
+   "risks": [
+    "Negative shareholder equity of -$9.9B, the result of borrowing to buy back shares.",
+    "Debt has nearly doubled since fiscal 2021, from $21.8B to $39.9B, against $1.4B of cash.",
+    "Sales are below the $97.1B of fiscal 2023, and net income has fallen from $8.4B to $6.7B since fiscal 2022."
+   ]
+  },
+  "TJX": {
+   "strengths": [
+    "Excellent returns on capital: 45.7%, the highest of the retailers tracked here.",
+    "More cash than debt: $6.2B against $2.9B.",
+    "Steady improvement every year since fiscal 2022: operating margin from 9.3% to 12.2% and net income from $3.3B to $5.5B."
+   ],
+   "risks": [
+    "The five-year growth rate of 13.4% is flattered by a pandemic-hit starting year. Over three years it is 6.5%.",
+    "Fiscal 2021 showed how exposed store-based retail is to closures: net income fell to $0.1B.",
+    "Capital spending has more than tripled since fiscal 2021, from $0.6B to $2.0B."
+   ]
+  },
+  "DG": {
+   "strengths": [
+    "Recovering: operating margin rose from 4.2% to 5.2% in the latest year and net income from $1.1B to $1.5B.",
+    "Debt has been cut from $7.0B to $4.6B in two years.",
+    "Free cash flow improved from $0.4B in fiscal 2023 to $2.4B."
+   ],
+   "risks": [
+    "Profitability is about half what it was: operating margin was 10.5% in fiscal 2021.",
+    "Net income is well below the $2.7B of fiscal 2021 even though sales are $9.0B higher.",
+    "Cash is low at $1.1B against $4.6B of debt."
+   ]
+  },
+  "PG": {
+   "strengths": [
+    "Very stable and profitable: operating margin has stayed between 22.1% and 24.3% for six years.",
+    "Large, dependable free cash flow of $13.6B to $16.5B a year.",
+    "Operating profit covers interest 22.5 times."
+   ],
+   "risks": [
+    "Slow growth: 2.7% a year over five years.",
+    "Short-term bills are well above short-term assets (current ratio 0.68), which it can manage only because its cash flow is so steady.",
+    "Debt of $34.1B is more than three times its cash ($9.9B)."
+   ]
+  },
+  "CL": {
+   "strengths": [
+    "A 60.1% gross margin, typical of a strong consumer brand.",
+    "A 30.2% return on invested capital.",
+    "Free cash flow has grown from $1.9B in 2022 to $3.6B."
+   ],
+   "risks": [
+    "Shareholder equity is almost zero ($0.1B) after years of buybacks, so there is very little cushion on the balance sheet.",
+    "Net income fell from $2.9B to $2.1B in 2025 and operating margin from 21.2% to 16.2%.",
+    "Debt of $8.0B against $1.4B of cash."
+   ]
+  },
+  "MDLZ": {
+   "strengths": [
+    "Sales have grown every year, from $26.6B in 2020 to $38.5B.",
+    "Steady free cash flow of $3.0B to $3.6B a year.",
+    "Growth of 7.7% a year over five years is among the fastest of the consumer staples companies tracked here."
+   ],
+   "risks": [
+    "Margins fell sharply in 2025: gross margin from 39.1% to 28.4% and operating margin from 17.4% to 9.2%, which points to much higher ingredient costs.",
+    "Net income nearly halved, from $4.6B to $2.5B.",
+    "Debt of $21.2B against $2.2B of cash, with net debt at 3.9 times EBITDA."
+   ]
+  },
+  "KMB": {
+   "strengths": [
+    "Margins have improved: gross margin rose from 30.8% in 2022 to 36.0%.",
+    "A 12.3% net margin and a 19.6% return on invested capital.",
+    "Debt has been reduced from $8.6B in 2021 to $7.2B."
+   ],
+   "risks": [
+    "Sales fell from $20.1B to $16.4B in 2025.",
+    "Free cash flow dropped from $2.5B to $1.6B.",
+    "Shareholder equity is very small ($1.5B) and short-term bills exceed short-term assets (current ratio 0.75)."
+   ]
+  },
+  "GIS": {
+   "strengths": [
+    "Free cash flow stayed positive at $1.6B even in a loss-making year.",
+    "Gross margin has held near 34% for six years.",
+    "Debt fell from $14.9B to $13.5B in the latest year."
+   ],
+   "risks": [
+    "It reported a net loss in fiscal 2026 after operating margin fell from 17.0% to 4.8%, which usually indicates a large one-off charge.",
+    "Sales have declined three years in a row, from $20.1B to $18.4B.",
+    "Debt is very heavy for its current earnings: net debt is 9.1 times EBITDA and operating profit covers interest only 1.5 times."
    ]
   }
  }

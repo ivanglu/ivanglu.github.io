@@ -38,7 +38,7 @@ financeiq/
   js/views.js           HTML pieces used by more than one page.
 
   data/financials.json  Built by tools/build_data.py. Do not edit by hand.
-  data/summaries.json   AI-written strengths and risks (16 companies).
+  data/summaries.json   AI-written strengths and risks.
 
   research/*.txt        Ivan's case-study text.        ← Ivan edits these
   about.txt             Ivan's About-page text.        ← Ivan edits this
@@ -47,6 +47,7 @@ financeiq/
   tools/test_build_data.py   Its tests.
   tools/validate_filings.py  Checks stored figures against the filings.
   tools/crosscheck.py        Recalculates ratios independently in Python.
+  tools/check_summaries.py   Checks every figure quoted in the AI summaries.
 
   tests/tests.js        Tests for calc.js.     tests/index.html shows them in a browser.
   tests/run.sh          Runs every test from the terminal.

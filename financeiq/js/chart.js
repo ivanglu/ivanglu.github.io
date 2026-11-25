@@ -44,7 +44,7 @@ const Chart = (() => {
     const x = (v) => m.left + (xs.indexOf(v) / Math.max(1, xs.length - 1)) * (W - m.left - m.right);
     const y = (v) => m.top + (1 - (v - lo) / (hi - lo)) * (H - m.top - m.bottom);
 
-    let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(cfg.label || "")}">`;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" tabindex="0" aria-label="${esc((cfg.label || "Chart") + ". Use the left and right arrow keys to read each year.")}">`;
     for (const t of ticks) {
       svg += `<line class="${t === 0 && lo < 0 ? "fq-zero" : "fq-gridline"}" x1="${m.left}" x2="${W - m.right}" y1="${y(t)}" y2="${y(t)}"/>`;
       svg += `<text x="${m.left - 8}" y="${y(t) + 4}" text-anchor="end">${esc(axisFmt(t))}</text>`;
@@ -83,7 +83,7 @@ const Chart = (() => {
     svg += `<line class="fq-cross" y1="${m.top}" y2="${H - m.bottom}" visibility="hidden"/>`;
     cfg.series.forEach((s) => { svg += `<circle class="fq-hot" r="5" fill="${s.color}" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`; });
     svg += `<rect class="fq-hit" x="${m.left - 10}" y="0" width="${W - m.left - m.right + 20}" height="${H}" fill="transparent"/></svg>`;
-    host.innerHTML = svg + `<div class="fq-tip" hidden></div>`;
+    host.innerHTML = svg + `<div class="fq-tip" role="status" aria-live="polite" hidden></div>`;
 
     const tip = host.querySelector(".fq-tip"), cross = host.querySelector(".fq-cross");
     const hots = [...host.querySelectorAll(".fq-hot")], hit = host.querySelector(".fq-hit");
@@ -92,9 +92,9 @@ const Chart = (() => {
       cross.setAttribute("visibility", "hidden");
       hots.forEach((h) => h.setAttribute("visibility", "hidden"));
     };
-    hit.addEventListener("pointermove", (ev) => {
-      const px = ev.clientX - host.getBoundingClientRect().left;
-      const at = xs.reduce((best, v) => (Math.abs(x(v) - px) < Math.abs(x(best) - px) ? v : best), xs[0]);
+    // Show the crosshair and tooltip for one x value.
+    const show = (at) => {
+      current = xs.indexOf(at);
       cross.setAttribute("x1", x(at)); cross.setAttribute("x2", x(at));
       cross.setAttribute("visibility", "visible");
       let html = `<b>${esc(cfg.xTitle ? cfg.xTitle(at) : at)}</b>`;
@@ -108,6 +108,22 @@ const Chart = (() => {
       tip.hidden = false;
       const left = x(at) + 14 + tip.offsetWidth > W ? x(at) - 14 - tip.offsetWidth : x(at) + 14;
       tip.style.left = Math.max(0, left) + "px";
+    };
+    let current = xs.length - 1;
+    hit.addEventListener("pointermove", (ev) => {
+      const px = ev.clientX - host.getBoundingClientRect().left;
+      show(xs.reduce((best, v) => (Math.abs(x(v) - px) < Math.abs(x(best) - px) ? v : best), xs[0]));
+    });
+    // Keyboard: Tab to the chart, then left and right arrows step through the years.
+    const svgEl = host.querySelector("svg");
+    svgEl.addEventListener("focus", () => show(xs[current]));
+    svgEl.addEventListener("blur", hide);
+    svgEl.addEventListener("keydown", (ev) => {
+      const step = { ArrowLeft: -1, ArrowRight: 1, Home: -xs.length, End: xs.length }[ev.key];
+      if (ev.key === "Escape") { hide(); return; }
+      if (!step) return;
+      ev.preventDefault();
+      show(xs[Math.min(xs.length - 1, Math.max(0, current + step))]);
     });
     hit.addEventListener("pointerleave", hide);
   }
