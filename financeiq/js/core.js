@@ -277,7 +277,11 @@ const Core = (() => {
       const pair = pairFromHash() || (saved && known(saved[0]) && known(saved[1]) && saved[0] !== saved[1] ? saved : DEFAULT_PAIR);
       window.addEventListener("hashchange", () => { const p = pairFromHash(); if (p && (p[0] !== state.a || p[1] !== state.b)) setPair(p[0], p[1], false); });
       await setPair(pair[0], pair[1], Boolean(cfg.usesPair));
-      if (new URLSearchParams(location.search).get("tour") === "1") { sessionStorage.setItem("fq.tour", "0"); }
+      // index.html?tour=1 starts the guided tour (used by the link on the main site)
+      if (new URLSearchParams(location.search).get("tour") === "1") {
+        sessionStorage.setItem("fq.tour", "0");
+        history.replaceState(null, "", location.pathname + location.hash);
+      }
       renderTour();
     } catch (err) {
       console.error(err);

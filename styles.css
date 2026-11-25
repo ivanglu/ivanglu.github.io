@@ -491,3 +491,42 @@ code {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------------- Featured project (FinanceIQ) ---------------- */
+
+.project--featured {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  border-color: var(--border-strong);
+}
+
+.project__list {
+  margin: 14px 0 18px;
+  padding-left: 20px;
+  color: var(--fg-muted);
+  font-size: 15.5px;
+}
+
+.project__list li { margin-bottom: 6px; }
+.project__list strong { color: var(--fg); font-weight: 600; }
+
+.project__links { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.project__more { margin: 16px 0 0; font-size: 15px; color: var(--fg-dim); }
+
+.project__preview {
+  display: block;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.project__preview img { display: block; width: 100%; height: auto; }
+
+@media (max-width: 860px) {
+  .project--featured { grid-template-columns: 1fr; }
+  .project__preview { order: -1; }
+}

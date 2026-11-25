@@ -107,7 +107,30 @@ Written before the v2 work started. Status of each phase is kept up to date in
 - Validation of stored figures against the filings themselves.
 - Documentation set, including interview preparation.
 
-## 4. Out of scope, on purpose
+## 4. Status (24 November 2026)
+
+| Phase | Status |
+|---|---|
+| 1. Foundation | Done. All 17 audit items addressed except #17 in part: charts are still pointer-only, with tables as the keyboard alternative |
+| 2. Core analytics | Done |
+| 3. Research and analytics | Done. Benchmarks leave out valuation multiples (no price source). Ivan's research text is his to write |
+| 4. Presentation | Done. Built on branch `financeiq-v2`; not deployed |
+| 5. Quality | Done. Results in [FINANCIAL_VALIDATION.md](FINANCIAL_VALIDATION.md) |
+
+## 5. Next, in priority order
+
+1. Ivan writes the three case studies and the About sections. Nothing else matters as much.
+2. A human checks the AI summaries, or they are removed.
+3. Read the balance sheets of the remaining 31 companies to confirm total debt.
+4. Add lease liabilities as a separate, clearly labelled line, and an "including leases" option for leverage ratios.
+5. Add AI summaries, or drop them, for the 22 newer companies so every company is treated the same.
+6. Keyboard access to chart data points.
+7. A scheduled data refresh (GitHub Actions) that opens a pull request when a new 10-K appears.
+8. Quarterly and trailing-twelve-month data.
+9. A fade from the growth rate to the terminal rate in the DCF, and a per-company discount rate.
+10. More peer groups, each with at least eight companies.
+
+## 6. Out of scope, on purpose
 
 - Banks, insurers and REITs. Their statements need different metrics.
 - Live prices, analyst estimates, quarterly or trailing-twelve-month data. Version 2 is annual data only and says so.

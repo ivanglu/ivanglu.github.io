@@ -19,6 +19,10 @@ echo "== Data pipeline tests (tools/build_data.py) =="
 python3 -m unittest -q tools/test_build_data.py || status=1
 
 echo
+echo "== Independent recalculation in Python (tools/crosscheck.py) =="
+python3 tools/crosscheck.py > /dev/null || status=1
+
+echo
 echo "== Syntax check of every script =="
 if [ -x "$JSC" ]; then
   for f in js/*.js js/pages/*.js tests/*.js; do
@@ -26,6 +30,6 @@ if [ -x "$JSC" ]; then
   done
   echo "all scripts parse"
 fi
-python3 -m py_compile tools/build_data.py tools/validate_filings.py && echo "python scripts compile" || status=1
+python3 -m py_compile tools/build_data.py tools/validate_filings.py tools/crosscheck.py && echo "python scripts compile" || status=1
 
 exit $status

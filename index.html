@@ -120,19 +120,39 @@
     <section id="projects" class="section">
       <h2 class="section__title">Projects</h2>
       <ul class="projects">
-        <li class="project">
-          <div class="project__meta">
-            <span class="tag">Finance</span>
-            <span class="tag tag--muted">JavaScript • Python • SEC data</span>
+        <li class="project project--featured">
+          <div class="project__featured-text">
+            <div class="project__meta">
+              <span class="tag">Flagship project</span>
+              <span class="tag tag--muted">Finance • Data analytics</span>
+              <span class="tag tag--muted">JavaScript • Python • SEC EDGAR</span>
+            </div>
+            <h3 class="project__title">FinanceIQ</h3>
+            <p class="project__body">
+              A financial research tool that reads ten years of annual reports for 38 public
+              companies straight from the SEC and turns them into comparisons, scores and
+              valuations that show their working.
+            </p>
+            <ul class="project__list">
+              <li><strong>Financial Health Score:</strong> 19 measures in five categories, with weights you can change.</li>
+              <li><strong>DCF valuation simulator:</strong> bear, base and bull scenarios and a sensitivity table.</li>
+              <li><strong>Trends and industry benchmarks:</strong> growth rates, ROIC and peer rankings.</li>
+              <li><strong>Tested:</strong> every formula has automated tests and figures are checked against the filings.</li>
+            </ul>
+            <div class="project__links">
+              <a href="financeiq/" class="btn btn--primary">Open FinanceIQ</a>
+              <a href="financeiq/index.html?tour=1" class="btn btn--ghost">2-minute tour</a>
+            </div>
+            <p class="project__more">
+              <a href="financeiq/research.html">My research</a> ·
+              <a href="financeiq/methodology.html">Methodology</a> ·
+              <a href="financeiq/reports/FinanceIQ-sample-report-AAPL-MSFT.pdf">Sample report (PDF)</a> ·
+              <a href="financeiq/about.html">About the project</a>
+            </p>
           </div>
-          <h3 class="project__title">FinanceIQ</h3>
-          <p class="project__body">
-            A company analyzer that compares two public companies on revenue growth,
-            profitability, debt, and cash flow, using ten years of figures from their SEC 10-K
-            filings. Interactive charts, plain-English explanations, and AI-written summaries of
-            each company's strengths and risks, with links to the original reports.
-          </p>
-          <a href="financeiq/" class="project__link">Open FinanceIQ →</a>
+          <a href="financeiq/" class="project__preview" aria-label="Open FinanceIQ">
+            <img src="financeiq/preview.png" alt="FinanceIQ overview page comparing Apple and Microsoft, with financial health scores" width="1280" height="1010" loading="lazy" />
+          </a>
         </li>
         <li class="project">
           <div class="project__meta">
