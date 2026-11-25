@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About the project · FinanceIQ</title>
+  <meta name="description" content="Why FinanceIQ was built, how it works, how AI was used and what its limits are." />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'self'; form-action 'none'" />
+  <meta name="theme-color" content="#0d0f14" />
+  <link rel="stylesheet" href="financeiq.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ff7a3d'/%3E%3Ctext x='50' y='72' font-size='64' font-weight='800' text-anchor='middle' font-family='Arial' fill='%2314171c'%3EF%3C/text%3E%3C/svg%3E" />
+</head>
+<body class="fq-is-loading">
+  <header class="fq-top" id="fq-nav"></header>
+  <div class="fq-hero">
+    <p class="fq-eyebrow">About the project</p>
+    <h1>About FinanceIQ</h1>
+    <p class="fq-lede">FinanceIQ is a financial research tool built by Ivan Glushchenko, a high-school senior who plans to study finance and data analytics. It turns the annual reports public companies file with the SEC into comparisons, scores and valuations that show their working.</p>
+  </div>
+  <main class="fq-main" id="app">
+    <section class="fq-prose">
+      <div id="a-status"></div>
+      <div data-ivan="why i created financeiq" data-title="Why I created FinanceIQ"></div>
+      <div data-ivan="what i learned about financial statements" data-title="What I learned about financial statements"></div>
+      <div data-ivan="what i learned about financial modeling" data-title="What I learned about financial modeling"></div>
+
+      <h2>How the data is collected and processed</h2>
+      <p>US public companies must file an audited annual report, the Form 10-K, with the Securities and Exchange Commission. Each number in the financial statements carries a machine-readable tag, and the SEC publishes those tagged numbers through its free EDGAR data service.</p>
+      <div class="fq-flow" role="img" aria-label="Architecture: SEC EDGAR, data retrieval, data normalization, financial calculation engine, scoring and valuation, interactive dashboard">
+        <div><strong>SEC EDGAR</strong><span>10-K filings, tagged numbers</span></div>
+        <div><strong>Data retrieval</strong><span>Download once a day at most, cached</span><br><code>build_data.py</code></div>
+        <div><strong>Data normalization</strong><span>Match tags, pick the original filing, adjust for splits, run checks</span><br><code>financials.json</code></div>
+        <div><strong>Calculation engine</strong><span>Margins, growth, returns, cash flow</span><br><code>calc.js</code></div>
+        <div><strong>Scoring and valuation</strong><span>Health Score, DCF, peer ranks</span><br><code>calc.js</code></div>
+        <div><strong>Interactive dashboard</strong><span>Charts, tables, report</span><br><code>pages/*.js</code></div>
+      </div>
+      <ol>
+        <li><strong>Retrieval.</strong> A Python script asks the SEC for each company's data, identifies itself as the SEC requires, waits between requests and keeps a local copy so it does not download the same file twice in a day.</li>
+        <li><strong>Normalization.</strong> Companies use different tags for the same idea (there are five common tags for "revenue"). The script tries them in a fixed order, keeps the figure from the original 10-K for each year, rebuilds total debt from its parts, and adjusts per-share figures for stock splits it detects in the filings.</li>
+        <li><strong>Checks.</strong> It tests that assets equal liabilities plus equity, that reported EPS agrees with net income divided by shares, and that no fiscal year is missing. Anything unusual is listed on the Methodology page.</li>
+        <li><strong>Calculation.</strong> The website loads one data file and calculates every ratio in the browser, in a single file of formulas with no page code in it, which is what the automated tests check.</li>
+      </ol>
+      <p>Every formula and scoring rule is on the <a data-nav="methodology.html" href="methodology.html">Methodology</a> page.</p>
+
+      <h2>Technology</h2>
+      <div class="fq-tablewrap"><table class="fq-table" style="font-size:14.5px">
+        <tbody>
+          <tr><td>Website</td><td style="text-align:left;white-space:normal">HTML, CSS and JavaScript, written without a framework or any third-party library. Charts are drawn as SVG by one small script.</td></tr>
+          <tr><td>Data pipeline</td><td style="text-align:left;white-space:normal">Python 3, standard library only</td></tr>
+          <tr><td>Data source</td><td style="text-align:left;white-space:normal">SEC EDGAR XBRL "company facts" service</td></tr>
+          <tr><td>Hosting</td><td style="text-align:left;white-space:normal">GitHub Pages behind Cloudflare. Static files only: no server, no database, no accounts, no tracking.</td></tr>
+          <tr><td>Testing</td><td style="text-align:left;white-space:normal">Unit tests for every formula (JavaScript) and for the data pipeline (Python), plus a check of stored figures against the filings themselves. <a href="tests/">Run the formula tests in your browser</a>.</td></tr>
+          <tr><td>PDF reports</td><td style="text-align:left;white-space:normal">A print stylesheet and the browser's own "Save as PDF"</td></tr>
+        </tbody>
+      </table></div>
+
+      <div data-ivan="technical challenges" data-title="Technical challenges"></div>
+
+      <h2>How artificial intelligence was used</h2>
+      <p>FinanceIQ was built with Claude Code, an AI coding assistant made by Anthropic. Working from a written specification, the assistant wrote most of the program code, the data pipeline, the automated tests and the technical documentation.</p>
+      <ul>
+        <li><strong>AI does no arithmetic on this site.</strong> Every number, score and valuation comes from fixed formulas that give the same result every time and can be checked against the filings.</li>
+        <li><strong>AI-written text is labelled.</strong> The "Strengths and risks" summaries on the Comparison page are marked as AI-generated, dated and linked to the source filings.</li>
+        <li><strong>Ivan's writing is his own.</strong> The research case studies and the personal sections of this page are written by Ivan and are marked "Written by Ivan".</li>
+      </ul>
+      <div data-ivan="how i used ai" data-title="How I used AI, in my own words"></div>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li><strong>It looks backwards.</strong> Everything is based on annual reports, which can be many months old and say nothing certain about the future.</li>
+        <li><strong>38 companies.</strong> Large US companies in four peer groups plus six others. No banks, insurers or property trusts.</li>
+        <li><strong>Annual data only.</strong> No quarterly figures and no live share prices.</li>
+        <li><strong>Simplified definitions.</strong> Debt excludes leases. Free cash flow is not adjusted for stock-based pay or acquisitions. ROIC uses book debt plus book equity.</li>
+        <li><strong>The score uses one scale for all industries</strong>, which favours high-margin businesses. The benchmarks page corrects for this only within four industries.</li>
+        <li><strong>The DCF is a teaching model.</strong> One growth rate, illustrative discount rates, and an answer that moves a great deal when the assumptions change.</li>
+        <li><strong>Tags can be wrong.</strong> The data depends on how each company tagged its own filing. The automatic checks catch some problems, not all.</li>
+      </ul>
+      <p class="fq-note">FinanceIQ is an educational project. Nothing on it is investment advice or a recommendation to buy or sell any security.</p>
+
+      <div data-ivan="future plans" data-title="Future plans"></div>
+    </section>
+  </main>
+  <footer class="fq-footer" id="fq-footer"></footer>
+  <script src="js/calc.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/pages/about.js"></script>
+</body>
+</html>

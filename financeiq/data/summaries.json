@@ -1,7 +1,7 @@
 {
  "generated": "2026-11-24",
  "model": "Claude (Anthropic)",
- "note": "Written by an AI model from the 10-K figures in this folder. Regenerate after running tools/build_data.py.",
+ "note": "Written by an AI model from the 10-K figures in this folder. Covers 16 of the 38 companies. Review after running tools/build_data.py: the numbers quoted here are not updated automatically.",
  "companies": {
   "AAPL": {
    "strengths": [
@@ -31,11 +31,11 @@
    "strengths": [
     "Strong growth at scale: sales rose from $182.5B to $402.8B in five years, about 17.2% a year.",
     "Highly profitable, with a 32.8% net margin and $132.2B of net income in 2025.",
-    "A large cash pile: $126.8B in cash and short-term investments against $49.1B of debt."
+    "A large cash pile: $126.8B in cash and short-term investments against $48.5B of debt."
    ],
    "risks": [
     "Capital spending quadrupled from $22.3B in 2020 to $91.4B in 2025, so free cash flow stayed flat near $73B while operating cash flow grew to $164.7B.",
-    "Debt more than tripled in a single year, from $14.3B to $49.1B.",
+    "Debt more than tripled in a single year, from $14.2B to $48.5B.",
     "Most of its revenue comes from advertising, which businesses tend to cut first when the economy slows."
    ]
   },
@@ -43,7 +43,7 @@
    "strengths": [
     "Enormous scale that is still growing: $716.9B of sales in 2025, up about 13.2% a year over five years.",
     "Profitability is improving quickly. Operating margin went from 2.4% in 2022 to 11.2%, and net income reached $77.7B.",
-    "More cash than debt: $123.0B against $69.3B."
+    "More cash than debt: $123.0B against $68.9B."
    ],
    "risks": [
     "Capital spending of $131.8B swallowed almost all of the $139.5B in operating cash flow, leaving just $7.7B of free cash flow in 2025.",
@@ -142,7 +142,7 @@
     "Sales grew about 5.9% a year over five years."
    ],
    "risks": [
-    "Debt of $46.4B is more than twice shareholder equity ($20.4B) and far above its $9.5B of cash.",
+    "Debt of $49.2B is more than twice shareholder equity ($20.4B) and far above its $9.5B of cash.",
     "Margins are slipping: operating margin fell from 14.0% to 12.2% in 2025 and net income from $9.6B to $8.2B.",
     "Growth has slowed to about 2% a year ($91.9B to $93.9B)."
    ]
@@ -178,7 +178,7 @@
     "Steady free cash flow of $5.5B to $7.3B a year since 2021."
    ],
    "risks": [
-    "Very heavy debt: $40.8B against less than $1B of cash, equal to more than five years of free cash flow.",
+    "Very heavy debt: $41.5B against less than $1B of cash, equal to more than five years of free cash flow.",
     "Negative shareholder equity (-$1.8B), meaning it owes more than the book value of what it owns.",
     "Slow growth: sales rose only from $25.5B to $26.9B over the last two years."
    ]

@@ -1,0 +1,41 @@
+published:
+revised:
+
+<!--
+IVAN: THIS FILE IS YOURS.  Case study: Walmart vs. Costco
+Research question: Does higher revenue necessarily indicate a stronger business?
+
+Write each section in your own words under its "## heading" line. Do not rename the headings.
+A section appears on the site as soon as it has text. Empty sections stay hidden from visitors.
+To see what is still missing, open:  research.html?r=wmt-cost&draft=1
+
+Formatting: leave a blank line between paragraphs.  - starts a bullet.
+            **bold**  *italic*  [link text](https://www.sec.gov)
+When you finish, fill in "published:" at the top (for example: published: January 2027).
+When you change it later, fill in "revised:".
+
+Nothing inside this comment is shown on the site.
+
+Questions to think about (prompts only, delete or ignore):
+  - Walmart's revenue is more than twice Costco's. Which has grown faster? Which earns more on the capital invested in it (ROIC)?
+  - Both have net margins around 3%. How can a business with a 3% margin still be a good one? (Look at asset turnover.)
+  - What does 'stronger' mean? Pick your own definition and defend it.
+-->
+
+## Initial hypothesis
+
+
+## Quantitative findings
+
+
+## Interpretation
+
+
+## Counterarguments
+
+
+## Risks and limitations
+
+
+## Conclusion
+

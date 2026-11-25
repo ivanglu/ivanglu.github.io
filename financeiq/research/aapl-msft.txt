@@ -1,0 +1,41 @@
+published:
+revised:
+
+<!--
+IVAN: THIS FILE IS YOURS.  Case study: Apple vs. Microsoft
+Research question: Which company has the more sustainable and financially resilient business model?
+
+Write each section in your own words under its "## heading" line. Do not rename the headings.
+A section appears on the site as soon as it has text. Empty sections stay hidden from visitors.
+To see what is still missing, open:  research.html?r=aapl-msft&draft=1
+
+Formatting: leave a blank line between paragraphs.  - starts a bullet.
+            **bold**  *italic*  [link text](https://www.sec.gov)
+When you finish, fill in "published:" at the top (for example: published: January 2027).
+When you change it later, fill in "revised:".
+
+Nothing inside this comment is shown on the site.
+
+Questions to think about (prompts only, delete or ignore):
+  - Apple makes more free cash flow. Microsoft has higher margins and is growing faster. Which matters more for 'sustainable', and why?
+  - Microsoft's capital spending went from about $20B to over $100B in five years. Is that a strength or a risk?
+  - Apple has more debt than cash; Microsoft has more cash than debt. Does that settle 'resilient'?
+-->
+
+## Initial hypothesis
+
+
+## Quantitative findings
+
+
+## Interpretation
+
+
+## Counterarguments
+
+
+## Risks and limitations
+
+
+## Conclusion
+

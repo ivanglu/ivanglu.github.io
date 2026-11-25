@@ -1,0 +1,38 @@
+<!--
+IVAN: THIS FILE IS YOURS.  It fills the personal sections of the About page.
+
+Write each section in your own words under its "## heading" line. Do not rename the headings.
+A section appears on the site as soon as it has text. Empty sections stay hidden from visitors.
+To see what is still missing, open:  about.html?draft=1
+
+Formatting: leave a blank line between paragraphs.  - starts a bullet.
+            **bold**  *italic*  [link text](https://www.sec.gov)
+
+Nothing inside this comment is shown on the site.
+
+Prompts (delete or ignore):
+  Why I created FinanceIQ           - What made you curious about how companies make money? Why build a tool instead of reading about it?
+  What I learned about financial statements - Which statement confused you most at first? What clicked?
+  What I learned about financial modeling   - What surprised you about the DCF? What did changing the discount rate teach you?
+  Technical challenges              - What broke? What did you have to look up or ask about? What would you do differently?
+  How I used AI                     - Be specific and honest: what did the AI assistant do, what did you decide, check or change yourself?
+  Future plans                      - What would you add next, and why?
+-->
+
+## Why I created FinanceIQ
+
+
+## What I learned about financial statements
+
+
+## What I learned about financial modeling
+
+
+## Technical challenges
+
+
+## How I used AI
+
+
+## Future plans
+

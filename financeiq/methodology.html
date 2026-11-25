@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Methodology · FinanceIQ</title>
+  <meta name="description" content="How FinanceIQ collects SEC data, calculates every ratio, builds the Financial Health Score and runs its DCF model." />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'self'; form-action 'none'" />
+  <meta name="theme-color" content="#0d0f14" />
+  <link rel="stylesheet" href="financeiq.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ff7a3d'/%3E%3Ctext x='50' y='72' font-size='64' font-weight='800' text-anchor='middle' font-family='Arial' fill='%2314171c'%3EF%3C/text%3E%3C/svg%3E" />
+</head>
+<body class="fq-is-loading">
+  <header class="fq-top" id="fq-nav"></header>
+  <div class="fq-hero">
+    <p class="fq-eyebrow">Methodology</p>
+    <h1>How every number is produced</h1>
+    <p class="fq-lede">Where the data comes from, the formula behind each measure, the rules of the Financial Health Score and the valuation model, and what none of it can tell you.</p>
+  </div>
+  <main class="fq-main fq-prose" id="app" style="max-width:var(--max-w)">
+    <section class="fq-prose">
+      <h2 id="data">1. Data</h2>
+      <p>Every financial figure comes from annual reports (Form 10-K) that companies file with the U.S. Securities and Exchange Commission. FinanceIQ reads them through the SEC's public EDGAR data service, which publishes the tagged numbers from each filing.</p>
+      <ul>
+        <li><strong>Annual data only.</strong> No quarterly or trailing-twelve-month figures are used. "FY2026" means the company's own fiscal year ending in 2026, and fiscal years end in different months.</li>
+        <li><strong>As first reported.</strong> Dollar amounts are taken from the 10-K for that year, not from later restatements, so they match the filing each number links to.</li>
+        <li><strong>Per-share figures are split-adjusted.</strong> EPS and share counts are restated for later stock splits. Splits are detected from the filings: when two annual reports give different share counts for the same year and the difference is a whole-number factor, that is a split.</li>
+        <li><strong>Nothing is estimated.</strong> A figure a company does not report is shown as "n/a". Where a figure is rebuilt from two reported ones, the table below says so.</li>
+        <li><strong>US dollars.</strong> All tracked companies report in US dollars, so no currency conversion is applied.</li>
+        <li><strong>No banks, insurers or property trusts.</strong> Their statements need different measures.</li>
+      </ul>
+      <p id="m-updated" class="fq-muted"></p>
+
+      <h2 id="formulas">2. Formulas</h2>
+      <p>Return ratios compare a full year of profit with a balance-sheet amount, so they use the average of the opening and closing balance.</p>
+      <div class="fq-tablewrap"><table class="fq-table" style="font-size:14px">
+        <thead><tr><th>Measure</th><th style="text-align:left">Formula</th></tr></thead>
+        <tbody>
+          <tr><td>Revenue growth</td><td style="text-align:left;white-space:normal">(this year − last year) ÷ last year</td></tr>
+          <tr><td>CAGR</td><td style="text-align:left;white-space:normal">(end ÷ start)<sup>1 ÷ years</sup> − 1. Only defined when both values are positive.</td></tr>
+          <tr><td>Gross / operating / net margin</td><td style="text-align:left;white-space:normal">gross profit, operating income or net income ÷ revenue</td></tr>
+          <tr><td>EBIT</td><td style="text-align:left;white-space:normal">operating income as reported. If a company reports no such line: pre-tax income + interest expense (marked †).</td></tr>
+          <tr><td>EBITDA</td><td style="text-align:left;white-space:normal">EBIT + depreciation and amortization</td></tr>
+          <tr><td>Free cash flow</td><td style="text-align:left;white-space:normal">operating cash flow − capital spending</td></tr>
+          <tr><td>Free cash flow to the firm</td><td style="text-align:left;white-space:normal">free cash flow + interest expense × (1 − tax rate)</td></tr>
+          <tr><td>Tax rate</td><td style="text-align:left;white-space:normal">income tax ÷ pre-tax income, limited to between 0% and 35%. If it cannot be calculated, the 21% US federal rate is used.</td></tr>
+          <tr><td>Total debt</td><td style="text-align:left;white-space:normal">short-term borrowings + current and long-term debt. Lease obligations are excluded.</td></tr>
+          <tr><td>Cash</td><td style="text-align:left;white-space:normal">cash and equivalents + short-term investments</td></tr>
+          <tr><td>Debt-to-equity</td><td style="text-align:left;white-space:normal">total debt ÷ shareholders' equity. Not calculated when equity is negative.</td></tr>
+          <tr><td>Current ratio</td><td style="text-align:left;white-space:normal">current assets ÷ current liabilities</td></tr>
+          <tr><td>Interest coverage</td><td style="text-align:left;white-space:normal">EBIT ÷ interest expense</td></tr>
+          <tr><td>Net debt ÷ EBITDA</td><td style="text-align:left;white-space:normal">(total debt − cash) ÷ EBITDA</td></tr>
+          <tr><td>Return on equity</td><td style="text-align:left;white-space:normal">net income ÷ average shareholders' equity</td></tr>
+          <tr><td>Return on assets</td><td style="text-align:left;white-space:normal">net income ÷ average total assets</td></tr>
+          <tr><td>Asset turnover</td><td style="text-align:left;white-space:normal">revenue ÷ average total assets</td></tr>
+          <tr><td>Return on invested capital</td><td style="text-align:left;white-space:normal">EBIT × (1 − tax rate) ÷ average (total debt + shareholders' equity)</td></tr>
+        </tbody>
+      </table></div>
+      <p class="fq-small fq-muted">ROIC here uses book debt plus book equity as invested capital and does not subtract cash. Other definitions exist and give different numbers; this one was chosen because it can be calculated the same way for every company from reported figures.</p>
+
+      <h2 id="score">3. Financial Health Score</h2>
+      <p>The score answers one question: on the latest annual report, how does this company look on growth, profitability, stability, cash flow and capital efficiency? It is built in three steps.</p>
+      <ol>
+        <li><strong>Each measure becomes 0 to 100 points.</strong> Every measure has two published levels. At or below the first it scores 0, at or beyond the second it scores 100, and in between it rises in a straight line. Capping at 0 and 100 stops one extreme number from dominating.</li>
+        <li><strong>Each category is the plain average of its measures.</strong></li>
+        <li><strong>The overall score is the weighted average of the five categories.</strong> The default weights are below. The sliders on the Financial Health page change them, and they are always rescaled to add up to 100%.</li>
+      </ol>
+      <div id="m-model"></div>
+      <h3>Where the levels come from</h3>
+      <p>The 0-point and 100-point levels are rules of thumb that appear widely in finance teaching: for example, a current ratio below 1 means short-term bills exceed short-term assets, interest coverage under 1.5 leaves almost no margin of safety, and net debt above four times EBITDA is commonly treated as heavily indebted. They are judgement calls, published so they can be challenged. They are not fitted to data and not adjusted by industry.</p>
+      <h3>Presets</h3>
+      <div id="m-presets"></div>
+      <h3>Special cases</h3>
+      <ul>
+        <li><strong>Missing data is not a bad score.</strong> A measure that cannot be calculated is left out of its category average. A category needs at least two measures to be scored; otherwise it is left out and the other weights are rescaled. If fewer than three categories can be scored, no overall score is shown.</li>
+        <li><strong>Negative equity.</strong> Debt-to-equity and return on equity are not meaningful, so they are left out. Leverage is still measured by interest coverage and net debt ÷ EBITDA.</li>
+        <li><strong>Very thin equity.</strong> When equity is under 10% of assets, return on equity is left out. Buybacks can shrink equity until the ratio becomes enormous without the business being any better.</li>
+        <li><strong>Losses.</strong> A negative margin scores 0. Three-year growth in operating income or EPS scores 0 if the latest figure is negative, and is left out if the starting figure was negative, because a growth rate from a negative base has no meaning.</li>
+        <li><strong>No debt.</strong> Interest coverage scores 100. Net debt ÷ EBITDA scores 100 whenever cash exceeds debt.</li>
+        <li><strong>Different industries.</strong> The scale is the same for every company. A supermarket will score lower on margins than a software company by design. The Industry Benchmarks page is the like-for-like view.</li>
+      </ul>
+      <p class="fq-note">The score describes reported financial statements. It does not look at the share price, at management, at products or at the future. It is not a prediction of stock performance and not a recommendation.</p>
+
+      <h2 id="dcf">4. DCF valuation</h2>
+      <p>The model is a standard two-stage enterprise-value DCF.</p>
+      <p class="fq-formula">cash flow in year t = starting cash flow × (1 + growth)<sup>t</sup></p>
+      <p class="fq-formula">present value of year t = cash flow in year t ÷ (1 + discount rate)<sup>t</sup></p>
+      <p class="fq-formula">terminal value = cash flow in final year × (1 + terminal growth) ÷ (discount rate − terminal growth)</p>
+      <p class="fq-formula">enterprise value = sum of present values + terminal value ÷ (1 + discount rate)<sup>years</sup></p>
+      <p class="fq-formula">equity value = enterprise value − debt + cash &nbsp;&nbsp;·&nbsp;&nbsp; value per share = equity value ÷ diluted shares</p>
+      <ul>
+        <li><strong>Cash flow used.</strong> Because the model values the whole business and then subtracts debt, the cash flow must be free cash flow to the firm (before interest). FinanceIQ approximates it as operating cash flow − capital spending + after-tax interest. If a company does not report interest expense, the model falls back to operating cash flow − capital spending and says so on the page.</li>
+        <li><strong>Default assumptions are rules, not forecasts.</strong> Base-case growth is the company's three-year revenue growth rate, limited to between 2% and 12%. The bear case is 4 points lower (not below 0%) and the bull case 4 points higher. Discount rates are 10.5%, 9% and 8%, and terminal growth 2%, 2.5% and 3%. The discount rates are illustrative and are not estimated for each company.</li>
+        <li><strong>Checks.</strong> The model refuses to run if the discount rate is not above terminal growth, if the projection is not 5 to 10 whole years, or if shares are not positive.</li>
+        <li><strong>Share price.</strong> FinanceIQ has no price feed. Upside or downside is only shown against a price the user types in.</li>
+        <li><strong>Limits.</strong> One constant growth rate; no adjustment for stock-based pay, leases, minority interests or one-off items; share count is the weighted average for the year, not today's count.</li>
+      </ul>
+
+      <h2 id="bench">5. Industry benchmarks</h2>
+      <p>Each peer group is a fixed list of large US companies chosen by hand. The "peer median" is the median of that list and nothing more. Ranks are shown as "3 of 8" because a percentile from eight companies would suggest more precision than exists. A rank needs at least four peers with data.</p>
+      <div id="m-groups"></div>
+
+      <h2 id="ai">6. Where AI is and is not used</h2>
+      <ul>
+        <li><strong>Not used</strong> for any number, ratio, score, valuation, chart or rule-based explanation. Those are produced by fixed code that gives the same answer every time.</li>
+        <li><strong>Used</strong> for the "Strengths and risks" text on the Comparison page, which is labelled as AI-generated, dated, and linked to the filings.</li>
+        <li><strong>Not used</strong> for anything marked "Written by Ivan".</li>
+      </ul>
+
+      <h2 id="quality">7. Data notes for each company</h2>
+      <p>Automatic checks run every time the data is refreshed: assets against liabilities plus equity, reported EPS against net income ÷ shares, gaps between fiscal years, and sudden changes in share count. This table lists what they found, any figure rebuilt from reported ones, and detected stock splits.</p>
+      <div id="m-quality"></div>
+    </section>
+  </main>
+  <footer class="fq-footer" id="fq-footer"></footer>
+  <script src="js/calc.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/pages/methodology.js"></script>
+</body>
+</html>

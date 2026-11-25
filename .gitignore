@@ -18,3 +18,7 @@ Thumbs.db
 
 # Claude Code local config
 .claude/
+
+# FinanceIQ download cache
+financeiq/tools/.cache/
+__pycache__/
