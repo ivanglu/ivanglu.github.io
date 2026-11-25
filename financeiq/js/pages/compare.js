@@ -159,10 +159,10 @@
           <p class="fq-sub">Each company graded on the same five categories. Open a company's page for every measure behind a grade.${many ? "" : " Use \"Add a company\" above to compare up to four."}</p>
           <div class="fq-card"><div class="fq-tablewrap"><table class="fq-table">
             <thead><tr><th>Category</th>${head}</tr></thead>
-            <tbody>${rs[0].categories.map((k, i) => `<tr><td>${esc(k.label)} <span class="fq-muted">· ${k.weight.toFixed(0)}%</span></td>${rs.map((r) => cell(r.categories[i])).join("")}</tr>`).join("")}
+            <tbody>${rs[0].categories.map((k, i) => `<tr><td>${esc(k.label)} <span class="fq-muted">· ${k.weight.toFixed(0)}%</span>${Views.waitsForPrices(k) ? ` <a class="fq-small" href="prices.html">connect prices</a>` : ""}</td>${rs.map((r) => (Views.waitsForPrices(r.categories[i]) ? Views.priceCell(k.label) : cell(r.categories[i]))).join("")}</tr>`).join("")}
               <tr class="fq-strong"><td>${allComplete ? "Overall rating" : "Partial rating"}</td>${rs.map((r) => cell(r)).join("")}</tr></tbody>
           </table></div>
-          ${allComplete ? "" : `<p class="fq-small fq-muted" style="margin:10px 0 0">Partial: ${esc(rs[0].missing.join(" and "))} need market data, which is not connected.</p>`}</div>
+          ${allComplete ? "" : `<p class="fq-small fq-muted" style="margin:10px 0 0">${esc(rs[0].missing.join(" and "))} need daily share prices. <a href="prices.html">Connect free price data on the Prices page</a> to grade them.</p>`}</div>
         </section>
         <section class="fq-section" id="health">
           <h2>Financial Health Score</h2>

@@ -151,7 +151,8 @@ a.fq-btn { display: inline-block; }
 
 /* glossary tooltips */
 .fq-term { position: relative; border-bottom: 1px dotted var(--fg-dim); cursor: help; }
-.fq-term:hover::after, .fq-term:focus::after {
+.fq-term:hover::after, .fq-term:focus::after,
+.fq-tipped:hover::after, .fq-tipped:focus-visible::after {
   content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 6px); z-index: 30;
   width: max-content; max-width: min(300px, 70vw); white-space: normal; text-align: left;
   background: #05070b; color: #e8ecf4; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
@@ -584,3 +585,38 @@ main[tabindex="-1"]:focus { outline: none; }
 label.fq-btn { cursor: pointer; }
 
 @media (max-width: 760px) { .fq-pill { padding: 3px 8px; font-size: 12px; } .fq-top__right { gap: 10px; } }
+
+/* ---------- 3.2.1: greyed-out price-based grades ---------- */
+.fq-tipped { position: relative; }
+.fq-tipped::after { pointer-events: none; }
+.fq-tipped:hover::after, .fq-tipped:focus-visible::after { left: 12px; right: auto; top: calc(100% + 6px); max-width: min(320px, 80vw); }
+a.fq-rcard--off { color: inherit; text-decoration: none; border-style: dashed; opacity: 0.62; transition: opacity 0.15s ease, border-color 0.15s ease; }
+a.fq-rcard--off:hover, a.fq-rcard--off:focus-visible { opacity: 1; border-color: var(--accent); }
+.fq-rcard--off strong { color: var(--fg-dim); }
+.fq-rcard__cta { display: block; margin-top: 6px; color: var(--accent); font-weight: 600; }
+a.fq-factors--off { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px dashed var(--border-strong); border-radius: var(--radius); color: inherit; text-decoration: none; opacity: 0.62; margin-top: 10px; }
+a.fq-factors--off:hover, a.fq-factors--off:focus-visible { opacity: 1; border-color: var(--accent); }
+.fq-factors__name { font-weight: 600; }
+.fq-factors__go { margin-left: auto; color: var(--accent); font-size: 13px; font-weight: 600; }
+details.fq-factors + a.fq-factors--off, a.fq-factors--off + details.fq-factors { margin-top: 10px; }
+@media (hover: none) { .fq-tipped:hover::after { content: none; } }   /* phones: the card itself says what to do */
+
+/* pop-up with a link, for anything waiting for prices */
+.fq-haspop { position: relative; }
+.fq-pop {
+  display: none; position: absolute; z-index: 40; left: 10px; right: 10px; top: calc(100% - 4px);
+  min-width: 220px; padding: 11px 13px; text-align: left; white-space: normal;
+  background: #05070b; color: #e8ecf4; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow); font-size: 13px; font-weight: 400; line-height: 1.45; opacity: 1;
+}
+.fq-pop strong { display: block; color: #ffffff; margin-bottom: 3px; }
+.fq-pop a { display: inline-block; margin-top: 7px; color: #8fb6ff; font-weight: 600; }
+.fq-haspop:hover > .fq-pop, .fq-haspop:focus-within > .fq-pop { display: block; }
+.fq-haspop:hover, .fq-haspop:focus-within { opacity: 1; z-index: 41; }
+.fq-gcell.fq-haspop .fq-pop { left: auto; right: 0; width: 260px; }
+.fq-rcard--off { border-style: dashed; opacity: 0.62; transition: opacity 0.15s ease, border-color 0.15s ease; cursor: help; }
+.fq-rcard--off:hover, .fq-rcard--off:focus-within { border-color: var(--accent); }
+div.fq-factors--off { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px dashed var(--border-strong); border-radius: var(--radius); opacity: 0.62; margin-top: 10px; cursor: help; }
+div.fq-factors--off:hover, div.fq-factors--off:focus-within { border-color: var(--accent); }
+.fq-factors--off .fq-pop { left: auto; right: 10px; max-width: 360px; }
+@media (hover: none) { .fq-haspop:hover > .fq-pop { display: none; } .fq-haspop:focus-within > .fq-pop { display: block; } }

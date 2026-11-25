@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.2.1 (25 November 2026)
+
+### Changed
+- Quantitative momentum and Valuation are shown again as greyed-out cards and measure rows when prices are not
+  connected, instead of being folded into one line. Hovering or focusing one opens a pop-up that explains why and
+  links to the Prices page; each card also has its own "Connect prices" link.
+- The Compare ratings table links to the Prices page beside those two rows, and each n/a cell has the same pop-up.
+
 ## 3.2.0 (25 November 2026, on branch `own-prices`, not yet deployed)
 
 ### Added

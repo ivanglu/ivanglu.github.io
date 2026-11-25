@@ -231,26 +231,41 @@ const Views = (() => {
       <a class="fq-btn fq-btn--primary" href="prices.html">Connect free price data</a>
     </div>`;
 
-  // Cards for the overall rating and each graded category. Categories waiting for prices
-  // are folded into one short line instead of empty cards.
+  // The pop-up shown on anything greyed out because prices are not connected. It is a real element
+  // (not a CSS tooltip) so that it can hold a link to the Prices page. It opens on hover and on keyboard focus.
+  const priceTip = (what = "This grade") => `
+    <span class="fq-pop" role="tooltip">
+      <strong>${esc(what)} needs daily share prices.</strong>
+      Connect a free price source with your own key on the Prices page. It takes about five minutes, and the prices stay in your browser.
+      <a href="prices.html">Open the Prices page →</a>
+    </span>`;
+
+  // Cards for the overall rating and each category. A category waiting for prices is shown as a
+  // greyed-out card that links to the Prices page and explains itself on hover or keyboard focus.
   function ratingCards(rating) {
     const waiting = rating.categories.filter(waitsForPrices);
-    const shown = rating.categories.filter((c) => !waitsForPrices(c));
     const graded = rating.categories.filter((c) => c.available).length;
     const overall = `
       <div class="fq-rcard fq-rcard--main">
         <h3>${rating.complete ? "Overall rating" : `Rating from ${graded} of 5 categories`}</h3>
         <div class="fq-rcard__row">${gradeBox(rating.grade)}<strong>${scoreText(rating.overall)}</strong><span class="fq-muted">/ 100</span></div>
-        <small>${rating.complete ? "All five categories, weighted as shown." : `${Math.round(rating.weightCovered)}% of the full weighting. ${waiting.length ? "Add prices for a complete rating." : esc(rating.missing.join(" and ")) + " not available."}`}</small>
+        <small>${rating.complete ? "All five categories, weighted as shown." : `${Math.round(rating.weightCovered)}% of the full weighting. ${waiting.length ? "Connect prices for a complete rating." : esc(rating.missing.join(" and ")) + " not available."}`}</small>
       </div>`;
-    return `<div class="fq-ratings fq-ratings--${shown.length + 1}">${overall}${shown.map((c) => `
+    const card = (c) => (waitsForPrices(c) ? `
+      <div class="fq-rcard fq-rcard--off fq-haspop" tabindex="0" aria-label="${esc(c.label)}: not graded yet, needs share prices">
+        <h3>${esc(c.label)} <span class="fq-muted">· ${c.weight.toFixed(0)}%</span></h3>
+        <div class="fq-rcard__row">${gradeBox(null)}<strong>–</strong><span class="fq-muted">Needs prices</span></div>
+        <small>${esc(c.about)} <a class="fq-rcard__cta" href="prices.html">Connect prices →</a></small>
+        ${priceTip(c.label)}
+      </div>` : `
       <div class="fq-rcard ${c.available ? "" : "fq-rcard--na"}">
         <h3>${esc(c.label)} <span class="fq-muted">· ${c.weight.toFixed(0)}%</span></h3>
         <div class="fq-rcard__row">${gradeBox(c.grade)}<strong>${scoreText(c.score)}</strong>${c.available ? `<span class="fq-muted">${Ratings.GRADE_WORDS[c.grade]}</span>` : ""}</div>
         <small>${c.available ? esc(c.about) : esc(c.reason)}</small>
-      </div>`).join("")}</div>
-      ${waiting.length ? connectPrompt(waiting.map((c) => c.label)) : ""}`;
+      </div>`);
+    return `<div class="fq-ratings">${overall}${rating.categories.map(card).join("")}</div>`;
   }
+
 
 
   // Every measure behind one category: value, comparison, both scores and the result.
@@ -274,11 +289,19 @@ const Views = (() => {
         Source: ${esc(cat.source)}. Methodology version ${Ratings.VERSION}.</p>`;
   }
 
-  const factorSections = (rating, company, open = null) => rating.categories.filter((c) => !waitsForPrices(c) || c.id === open).map((c) => `
+  // One expandable row per category. A category waiting for prices is a greyed row that links to the Prices page.
+  // A table cell for a grade that is waiting for prices.
+  const priceCell = (label) => `<td><span class="fq-gcell fq-haspop" tabindex="0">–${gradeBox(null, "sm")}${priceTip(label)}</span></td>`;
+
+  const factorSections = (rating, company, open = null) => rating.categories.map((c) => (waitsForPrices(c) && c.id !== open ? `
+    <div class="fq-factors fq-factors--off fq-haspop" tabindex="0">
+      ${gradeBox(null, "sm")}<span class="fq-factors__name">${esc(c.label)}</span> <span class="fq-muted">needs share prices</span><a class="fq-factors__go" href="prices.html">Connect prices →</a>
+      ${priceTip(c.label)}
+    </div>` : `
     <details class="fq-factors" ${c.id === open ? "open" : ""}>
       <summary>${gradeBox(c.grade, "sm")}${esc(c.label)} <span>${c.available ? `${scoreText(c.score)} / 100 · adds ${c.contribution.toFixed(1)} points to the rating` : "not available"}</span></summary>
       <div><p class="fq-panel__what">${esc(c.about)}</p>${c.available || c.factors.some((f) => isNum(f.score)) ? factorTable(c, company) : `<p class="fq-note">${esc(c.reason)}</p>`}</div>
-    </details>`).join("");
+    </details>`)).join("");
 
   // Line chart of a quarterly field. xs are quarter-end dates.
   function quarterChart(host, companies, key, { height = 220, kind = "pct" } = {}) {
@@ -298,5 +321,5 @@ const Views = (() => {
       <a class="fq-btn fq-btn--primary" href="prices.html">Connect free price data</a>
     </div>`;
 
-  return { gradeBox, rfmt, ratingCards, factorTable, factorSections, quarterChart, noMarket, METRICS, chart, legend, bar, scoreText, healthCard, SCORE_ROWS, scorecard, sourceTable, SCENARIOS, dcfRun, dcfScenarioTable, BENCH, benchmark };
+  return { waitsForPrices, priceTip, priceCell, gradeBox, rfmt, ratingCards, factorTable, factorSections, quarterChart, noMarket, METRICS, chart, legend, bar, scoreText, healthCard, SCORE_ROWS, scorecard, sourceTable, SCENARIOS, dcfRun, dcfScenarioTable, BENCH, benchmark };
 })();
