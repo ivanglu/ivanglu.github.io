@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.1 (25 November 2026)
+
+### Fixed
+- After the 3.0.0 deploy, returning visitors could get new pages with old cached scripts and styles (pages are
+  cached for ten minutes, scripts for four hours), which broke the site until the old copies expired. Every
+  script and stylesheet link now carries a version number, and data files are always re-checked with the server.
+  `tools/bump_version.py` changes the number before a deploy.
+
 ## 3.0.0 (25 November 2026, on branch `financeiq-v3`, not yet deployed)
 
 ### Added

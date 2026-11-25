@@ -125,6 +125,14 @@ Never put an API key in the repository.
 
 ## Deploy
 
+If any `.js` or `.css` file changed, give the files a new version number first. Browsers keep scripts for up
+to four hours but pages for ten minutes, so without this a visitor can get a new page with old scripts and see
+a broken site.
+
+```bash
+python3 financeiq/tools/bump_version.py 3.0.2
+```
+
 GitHub Pages publishes whatever is on the `main` branch. Version 3 was built on the branch `financeiq-v3`.
 
 ```bash

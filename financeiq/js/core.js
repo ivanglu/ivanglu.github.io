@@ -103,11 +103,13 @@ const Core = (() => {
   };
 
   async function getJSON(url, optional = false) {
-    const res = await fetch(url);
+    // "no-cache" makes the browser check with the server every time, so a data update is never
+    // hidden behind an old cached copy. (Scripts and styles carry a ?v= version number for the same reason.)
+    const res = await fetch(url, { cache: "no-cache" });
     if (!res.ok) { if (optional) return null; throw new Error(url + " returned " + res.status); }
     return res.json();
   }
-  const getText = (url) => fetch(url).then((r) => (r.ok ? r.text() : "")).catch(() => "");
+  const getText = (url) => fetch(url, { cache: "no-cache" }).then((r) => (r.ok ? r.text() : "")).catch(() => "");
 
   // Apple -> Apple's, Starbucks -> Starbucks', McDonald's -> McDonald's
   const poss = (name) => (name.endsWith("'s") ? name : name.endsWith("s") ? name + "'" : name + "'s");
